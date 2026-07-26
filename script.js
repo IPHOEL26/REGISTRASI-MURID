@@ -1,6 +1,7 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVGAmUd-BZwuFOXYGrdR7JR8fnkEuSjq5Xj0x9qLqcICg_57qMkfSBRfJNVevU9OtO/exec";
 const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V2";
+const FRONTEND_VERSION = "2026.07.27-2";
 
 const SERVICE_CONFIG = {
   PMB: { title: "Pendaftaran Murid Baru", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendaftaran" },
@@ -81,6 +82,7 @@ let selectedService = "PMB";
 let currentStep = 0;
 let pendingToken = "";
 let responseTimer = null;
+let lastHandledToken = "";
 let draftTimer = null;
 let lastSubmissionSucceeded = false;
 let isRestoringDraft = false;
@@ -428,6 +430,7 @@ function submitData() {
   }
 
   pendingToken = pendingToken || createToken();
+  lastHandledToken = "";
   requestToken.value = pendingToken;
   form.action = WEB_APP_URL;
   submitBtn.disabled = true;
@@ -439,8 +442,8 @@ function submitData() {
   responseTimer = window.setTimeout(() => {
     submitBtn.disabled = false;
     submitBtn.textContent = SERVICE_CONFIG[selectedService].submit;
-    showResult(false, "Belum ada jawaban dari pusat data. Periksa koneksi, lalu kirim kembali.");
-  }, 30000);
+    showResult(false, `Pusat data belum menjawab dalam 60 detik. Draf tetap aman; silakan kirim kembali. Kode: TIMEOUT • Versi ${FRONTEND_VERSION}.`);
+  }, 60000);
 
   HTMLFormElement.prototype.submit.call(form);
 }
@@ -452,6 +455,7 @@ function showResult(success, message) {
   resultIcon.classList.toggle("error", !success);
   resultTitle.textContent = success ? "Data berhasil dikirim" : "Data belum tersimpan";
   resultMessage.textContent = message || (success ? "Data telah masuk ke pusat data sekolah." : "Silakan periksa data dan coba lagi.");
+  resultMessage.classList.toggle("error-message", !success);
   finishBtn.textContent = success ? "Selesai dan kembali ke awal" : "Kembali periksa data";
   if (success) clearDraft();
   resultModal.classList.add("show");
@@ -577,8 +581,14 @@ document.getElementById("locationBtn").addEventListener("click", () => {
 });
 
 window.addEventListener("message", event => {
-  const data = event.data;
+  let data = event.data;
+  if (typeof data === "string") {
+    try { data = JSON.parse(data); }
+    catch (error) { return; }
+  }
   if (!data || data.source !== "REGISTRASI_MURID" || data.token !== pendingToken) return;
+  if (lastHandledToken === data.token) return;
+  lastHandledToken = data.token;
   submitBtn.disabled = false;
   submitBtn.textContent = SERVICE_CONFIG[selectedService].submit;
   showResult(data.status === "success", data.message);
