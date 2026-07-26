@@ -1,7 +1,7 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVGAmUd-BZwuFOXYGrdR7JR8fnkEuSjq5Xj0x9qLqcICg_57qMkfSBRfJNVevU9OtO/exec";
-const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V2";
-const FRONTEND_VERSION = "2026.07.27-3";
+const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V3";
+const FRONTEND_VERSION = "2026.07.27-5";
 
 const SERVICE_CONFIG = {
   PMB: { title: "Pendaftaran Murid Baru", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendaftaran" },
@@ -119,7 +119,7 @@ function saveDraftImmediately() {
   });
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
-      version: 2,
+      version: 3,
       savedAt: Date.now(),
       selectedService,
       currentStep,
@@ -147,7 +147,7 @@ function restoreDraft() {
   let draft;
   try { draft = JSON.parse(sessionStorage.getItem(DRAFT_STORAGE_KEY) || "null"); }
   catch (error) { clearDraft(); return false; }
-  if (!draft || draft.version !== 2 || !SERVICE_CONFIG[draft.selectedService] || !draft.school) return false;
+  if (!draft || draft.version !== 3 || !SERVICE_CONFIG[draft.selectedService] || !draft.school) return false;
 
   isRestoringDraft = true;
   selectedService = draft.selectedService;
@@ -555,30 +555,41 @@ document.addEventListener("focusout", event => {
   scheduleDraftSave();
 });
 
-document.getElementById("locationBtn").addEventListener("click", () => {
-  const status = document.getElementById("locationStatus");
-  const button = document.getElementById("locationBtn");
-  if (!navigator.geolocation) {
-    status.textContent = "Ponsel atau browser ini tidak mendukung pengambilan lokasi.";
-    return;
-  }
-  button.disabled = true;
-  status.textContent = "Sedang mengambil lokasi…";
-  navigator.geolocation.getCurrentPosition(position => {
-    document.getElementById("lintang").value = position.coords.latitude.toFixed(7);
-    document.getElementById("bujur").value = position.coords.longitude.toFixed(7);
-    status.textContent = `Lokasi berhasil diambil (akurasi sekitar ${Math.round(position.coords.accuracy)} meter).`;
-    button.disabled = false;
-  }, error => {
-    const messages = {
-      1: "Izin lokasi ditolak. Aktifkan izin lokasi pada browser lalu coba lagi.",
-      2: "Lokasi belum dapat ditemukan. Pastikan GPS aktif.",
-      3: "Pengambilan lokasi terlalu lama. Silakan coba lagi.",
-    };
-    status.textContent = messages[error.code] || "Lokasi belum dapat diambil.";
-    button.disabled = false;
-  }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-});
+function setupLocationButton(buttonId, latitudeId, longitudeId, statusId) {
+  const button = document.getElementById(buttonId);
+  const latitude = document.getElementById(latitudeId);
+  const longitude = document.getElementById(longitudeId);
+  const status = document.getElementById(statusId);
+  button.addEventListener("click", () => {
+    if (!navigator.geolocation) {
+      status.textContent = "Ponsel atau browser ini tidak mendukung pengambilan lokasi.";
+      return;
+    }
+    button.disabled = true;
+    status.textContent = "Sedang mengambil lokasi…";
+    navigator.geolocation.getCurrentPosition(position => {
+      latitude.value = position.coords.latitude.toFixed(7);
+      longitude.value = position.coords.longitude.toFixed(7);
+      clearFieldError(latitude);
+      clearFieldError(longitude);
+      scheduleDraftSave();
+      status.textContent = `Lokasi berhasil diambil (akurasi sekitar ${Math.round(position.coords.accuracy)} meter).`;
+      button.disabled = false;
+    }, error => {
+      const messages = {
+        1: "Izin lokasi ditolak. Aktifkan izin lokasi pada browser lalu coba lagi.",
+        2: "Lokasi belum dapat ditemukan. Pastikan GPS aktif.",
+        3: "Pengambilan lokasi terlalu lama. Silakan coba lagi.",
+      };
+      status.textContent = messages[error.code] || "Lokasi belum dapat diambil.";
+      button.disabled = false;
+    }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
+  });
+}
+
+setupLocationButton("locationBtn", "lintang", "bujur", "locationStatus");
+setupLocationButton("locationBtnMutasi", "lintangMutasi", "bujurMutasi", "locationStatusMutasi");
+setupLocationButton("locationBtnUpdate", "lintangUpdate", "bujurUpdate", "locationStatusUpdate");
 
 window.addEventListener("message", event => {
   let data = event.data;
