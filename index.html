@@ -1,0 +1,389 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0b6b65">
+  <meta name="description" content="Layanan terpadu pendaftaran, mutasi, dan pembaruan data murid untuk empat SD Negeri di Maluku Tengah.">
+  <title>Registrasi Murid | SD Negeri Maluku Tengah</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div class="ambient ambient-one" aria-hidden="true"></div>
+  <div class="ambient ambient-two" aria-hidden="true"></div>
+
+  <header class="site-header">
+    <a class="brand" href="#" id="brandHome" aria-label="Kembali ke halaman awal">
+      <span class="brand-mark" aria-hidden="true">RM</span>
+      <span><strong>Registrasi Murid</strong><small>Maluku Tengah</small></span>
+    </a>
+    <div class="secure-note"><span aria-hidden="true">●</span> Data tersimpan di pusat data sekolah</div>
+  </header>
+
+  <main class="page-shell">
+    <section id="serviceScreen" class="screen home-screen">
+      <div class="hero-copy">
+        <p class="eyebrow">Layanan peserta didik terpadu</p>
+        <h1>Satu pintu untuk data murid yang lebih rapi.</h1>
+        <p class="hero-lead">Pilih layanan yang dibutuhkan. Setiap isian akan diarahkan ke satu pusat data untuk empat sekolah.</p>
+        <div class="trust-row" aria-label="Keunggulan layanan">
+          <span>Ramah ponsel</span>
+          <span>Validasi otomatis</span>
+          <span>Data terpusat</span>
+        </div>
+      </div>
+
+      <div class="service-panel">
+        <div class="panel-heading">
+          <span class="step-kicker">Mulai di sini</span>
+          <h2>Pilih layanan</h2>
+          <p>Gunakan satu tombol sesuai kebutuhan murid.</p>
+        </div>
+
+        <div id="mainChoices" class="choice-stack">
+          <button class="service-card service-primary" type="button" data-service-choice="PMB">
+            <span class="service-icon" aria-hidden="true">01</span>
+            <span class="service-text"><strong>Pendaftaran Murid Baru</strong><small>Untuk calon murid yang mendaftar sebagai peserta didik baru.</small></span>
+            <span class="service-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="service-card" type="button" id="openMutationChoices">
+            <span class="service-icon" aria-hidden="true">02</span>
+            <span class="service-text"><strong>Mutasi Murid</strong><small>Untuk murid yang masuk dari atau keluar menuju sekolah lain.</small></span>
+            <span class="service-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="service-card" type="button" data-service-choice="UPDATE">
+            <span class="service-icon" aria-hidden="true">03</span>
+            <span class="service-text"><strong>Pembaruan Data Tahunan</strong><small>Untuk memperbarui rombel, ukuran tubuh, alamat, dan data yang berubah.</small></span>
+            <span class="service-arrow" aria-hidden="true">→</span>
+          </button>
+        </div>
+
+        <div id="mutationChoices" class="mutation-choices is-hidden" aria-live="polite">
+          <button type="button" class="back-link" id="backToServices">← Kembali ke pilihan layanan</button>
+          <div class="mini-choice-grid">
+            <button type="button" class="mini-choice" data-service-choice="MUTASI_MASUK">
+              <span aria-hidden="true">↓</span><strong>Mutasi Masuk</strong><small>Murid pindahan masuk ke sekolah tujuan.</small>
+            </button>
+            <button type="button" class="mini-choice" data-service-choice="MUTASI_KELUAR">
+              <span aria-hidden="true">↑</span><strong>Mutasi Keluar</strong><small>Murid keluar, mengundurkan diri, wafat, atau status lainnya.</small>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="contextScreen" class="screen context-screen is-hidden" aria-labelledby="contextTitle">
+      <button type="button" class="back-link" id="backFromContext">← Kembali</button>
+      <div class="context-card">
+        <p class="eyebrow">Sebelum mengisi data</p>
+        <h1 id="contextTitle">Tentukan tahun dan sekolah</h1>
+        <p>Data ini menjadi penanda utama agar pengelola sekolah mudah memfilter hasil pendataan.</p>
+
+        <div class="context-grid">
+          <div class="field-block">
+            <label for="contextYear">Tahun pendataan</label>
+            <select id="contextYear" aria-describedby="yearHelp"></select>
+            <small id="yearHelp">Tahun mengikuti waktu saat formulir diisi.</small>
+          </div>
+          <div class="field-block">
+            <label for="contextSchool">Nama sekolah</label>
+            <select id="contextSchool">
+              <option value="">Pilih sekolah tujuan</option>
+              <option>SD NEGERI 27 MALUKU TENGAH</option>
+              <option>SD NEGERI 16 MALUKU TENGAH</option>
+              <option>SD NEGERI 150 MALUKU TENGAH</option>
+              <option>SD NEGERI 129 MALUKU TENGAH</option>
+            </select>
+            <span class="field-error" aria-live="polite"></span>
+          </div>
+        </div>
+
+        <button type="button" class="btn btn-primary btn-wide" id="startFormBtn">Lanjut mengisi data <span aria-hidden="true">→</span></button>
+      </div>
+    </section>
+
+    <section id="wizardScreen" class="screen wizard-screen is-hidden" aria-labelledby="wizardTitle">
+      <aside class="wizard-aside">
+        <button type="button" class="back-link light" id="changeServiceBtn">← Ganti layanan</button>
+        <p class="eyebrow light">Formulir aktif</p>
+        <h1 id="wizardTitle">Pendaftaran Murid Baru</h1>
+        <div class="context-summary">
+          <div><span>Tahun</span><strong id="summaryYear">—</strong></div>
+          <div><span>Sekolah</span><strong id="summarySchool">—</strong></div>
+        </div>
+        <ol id="desktopStepper" class="desktop-stepper" aria-label="Tahapan formulir"></ol>
+        <p class="privacy-note">Siapkan KK, akta lahir, NISN, dan data orang tua sebelum memulai.</p>
+      </aside>
+
+      <div class="wizard-card">
+        <div class="mobile-progress">
+          <div><span id="mobileStepLabel">Langkah 1</span><strong id="mobilePercent">0%</strong></div>
+          <div class="progress-track"><span id="progressBar"></span></div>
+        </div>
+
+        <form id="registrationForm" method="post" target="submitFrame" autocomplete="on" novalidate>
+          <input type="hidden" name="Tahun Pendaftaran" id="formYear">
+          <input type="hidden" name="Nama Sekolah" id="formSchool">
+          <input type="hidden" name="Jenis Layanan" id="formService">
+          <input type="hidden" name="Request Token" id="requestToken">
+          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU">
+
+          <section class="form-step" data-services="PMB" data-title="Identitas Murid">
+            <div class="step-heading"><span>01</span><div><h2>Identitas murid</h2><p>Isi persis seperti dokumen resmi.</p></div></div>
+            <div class="form-grid two">
+              <div class="field-block span-two">
+                <label for="nama">Nama lengkap murid</label>
+                <input id="nama" name="Nama" class="uppercase" type="text" autocomplete="name" data-required="true" placeholder="Contoh: AISYAH NUR HALIZA">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="jk">Jenis kelamin</label>
+                <select id="jk" name="JK" data-required="true"><option value="">Pilih</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="nisn">NISN</label>
+                <input id="nisn" name="NISN" class="digits" type="text" inputmode="numeric" maxlength="10" data-length="10" data-required="true" placeholder="10 digit NISN">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="nik">NIK murid</label>
+                <input id="nik" name="NIK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true" placeholder="16 digit NIK">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="nipd">NIPD</label>
+                <input id="nipd" name="NIPD" type="text" inputmode="numeric" placeholder="Diisi jika sudah ada">
+              </div>
+              <div class="field-block">
+                <label for="tempatLahir">Tempat lahir</label>
+                <input id="tempatLahir" name="Tempat Lahir" class="propercase" type="text" data-required="true" placeholder="Contoh: Masohi">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="tanggalLahir">Tanggal lahir</label>
+                <input id="tanggalLahir" name="Tanggal Lahir" class="date-id" type="text" inputmode="numeric" maxlength="10" data-required="true" placeholder="dd-mm-yyyy">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="agama">Agama</label>
+                <select id="agama" name="Agama" data-required="true"><option value="">Pilih</option><option>Islam</option><option>Kristen</option><option>Katolik</option><option>Hindu</option><option>Buddha</option><option>Konghucu</option><option>Kepercayaan kepada Tuhan YME</option></select>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="asalPendidikan">Asal pendidikan sebelum SD</label>
+                <select id="asalPendidikan" name="Asal Pendidikan" data-required="true"><option value="">Pilih</option><option>TK/PAUD</option><option>Belum pernah TK/PAUD</option></select>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block span-two" id="schoolOriginWrap">
+                <label for="sekolahAsal">Sekolah asal / TK / PAUD</label>
+                <input id="sekolahAsal" name="Sekolah Asal" class="uppercase" type="text" placeholder="Contoh: TK NEGERI PEMBINA">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="PMB" data-title="Alamat & Kontak">
+            <div class="step-heading"><span>02</span><div><h2>Alamat dan kontak</h2><p>Gunakan alamat tempat tinggal murid saat ini.</p></div></div>
+            <div class="form-grid four">
+              <div class="field-block span-four">
+                <label for="alamat">Alamat lengkap</label>
+                <textarea id="alamat" name="Alamat" rows="3" data-required="true" placeholder="Jalan, lingkungan, patokan rumah"></textarea>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block"><label for="rt">RT</label><input id="rt" name="RT" class="digits" type="text" inputmode="numeric" maxlength="3" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="rw">RW</label><input id="rw" name="RW" class="digits" type="text" inputmode="numeric" maxlength="3" placeholder="Jika ada"></div>
+              <div class="field-block span-two"><label for="dusun">Dusun</label><input id="dusun" name="Dusun" class="propercase" type="text" placeholder="Jika ada"></div>
+              <div class="field-block span-two">
+                <label for="kelurahan">Kelurahan / desa</label><input id="kelurahan" name="Kelurahan" class="propercase" type="text" data-required="true">
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block"><label for="kecamatan">Kecamatan</label><input id="kecamatan" name="Kecamatan" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="kodePos">Kode pos</label><input id="kodePos" name="Kode Pos" class="digits" type="text" inputmode="numeric" maxlength="5" data-length="5" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="jenisTinggal">Jenis tinggal</label><select id="jenisTinggal" name="Jenis Tinggal"><option value="">Pilih jika diketahui</option><option>Bersama orang tua</option><option>Bersama wali</option><option>Kost</option><option>Asrama</option><option>Panti asuhan</option><option>Lainnya</option></select></div>
+              <div class="field-block span-two"><label for="transportasi">Alat transportasi</label><select id="transportasi" name="Alat Transportasi"><option value="">Pilih jika diketahui</option><option>Jalan kaki</option><option>Angkutan umum/bus/pete-pete</option><option>Mobil/bus antar jemput</option><option>Kereta api</option><option>Ojek</option><option>Andong/bendi/sado/dokar/delman/becak</option><option>Perahu penyeberangan/rakit/getek</option><option>Kuda</option><option>Sepeda</option></select></div>
+              <div class="field-block"><label for="telepon">Telepon</label><input id="telepon" name="Telepon" class="phone" type="tel" inputmode="tel" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="hp">HP orang tua / wali</label><input id="hp" name="HP" class="phone" type="tel" inputmode="tel" data-required="true" placeholder="08… atau +62…"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="email">E-mail</label><input id="email" name="E-Mail" type="email" autocomplete="email" placeholder="Jika ada"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="skhun">SKHUN</label><input id="skhun" name="SKHUN" type="text" placeholder="Jika ada"></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="PMB" data-title="Orang Tua">
+            <div class="step-heading"><span>03</span><div><h2>Data ayah dan ibu</h2><p>Isi sesuai Kartu Keluarga.</p></div></div>
+            <div class="family-section">
+              <h3>Data Ayah</h3>
+              <div class="form-grid three">
+                <div class="field-block span-two"><label for="ayahNama">Nama ayah</label><input id="ayahNama" name="Data Ayah - Nama" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ayahTahun">Tahun lahir</label><input id="ayahTahun" name="Data Ayah - Tahun Lahir" class="digits" type="text" inputmode="numeric" maxlength="4" data-length="4" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ayahPendidikan">Jenjang pendidikan</label><select id="ayahPendidikan" name="Data Ayah - Jenjang Pendidikan" data-required="true" data-options="education"></select><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ayahPekerjaan">Pekerjaan</label><select id="ayahPekerjaan" name="Data Ayah - Pekerjaan" data-required="true" data-options="job"></select><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ayahPenghasilan">Penghasilan</label><select id="ayahPenghasilan" name="Data Ayah - Penghasilan" data-required="true" data-options="income"></select><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block span-three"><label for="ayahNik">NIK ayah</label><input id="ayahNik" name="Data Ayah - NIK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              </div>
+            </div>
+            <div class="family-section">
+              <h3>Data Ibu</h3>
+              <div class="form-grid three">
+                <div class="field-block span-two"><label for="ibuNama">Nama ibu</label><input id="ibuNama" name="Data Ibu - Nama" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ibuTahun">Tahun lahir</label><input id="ibuTahun" name="Data Ibu - Tahun Lahir" class="digits" type="text" inputmode="numeric" maxlength="4" data-length="4" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ibuPendidikan">Jenjang pendidikan</label><select id="ibuPendidikan" name="Data Ibu - Jenjang Pendidikan" data-required="true" data-options="education"></select><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ibuPekerjaan">Pekerjaan</label><select id="ibuPekerjaan" name="Data Ibu - Pekerjaan" data-required="true" data-options="job"></select><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block"><label for="ibuPenghasilan">Penghasilan</label><select id="ibuPenghasilan" name="Data Ibu - Penghasilan" data-required="true" data-options="income"></select><span class="field-error" aria-live="polite"></span></div>
+                <div class="field-block span-three"><label for="ibuNik">NIK ibu</label><input id="ibuNik" name="Data Ibu - NIK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              </div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="PMB" data-title="Wali & Bantuan">
+            <div class="step-heading"><span>04</span><div><h2>Wali dan bantuan sosial</h2><p>Data wali boleh dilewati bila murid tinggal bersama orang tua.</p></div></div>
+            <div class="family-section subtle">
+              <h3>Data Wali <small>Jika ada</small></h3>
+              <div class="form-grid three">
+                <div class="field-block span-two"><label for="waliNama">Nama wali</label><input id="waliNama" name="Data Wali - Nama" class="uppercase" type="text"></div>
+                <div class="field-block"><label for="waliTahun">Tahun lahir</label><input id="waliTahun" name="Data Wali - Tahun Lahir" class="digits" type="text" inputmode="numeric" maxlength="4"></div>
+                <div class="field-block"><label for="waliPendidikan">Jenjang pendidikan</label><select id="waliPendidikan" name="Data Wali - Jenjang Pendidikan" data-options="education"></select></div>
+                <div class="field-block"><label for="waliPekerjaan">Pekerjaan</label><select id="waliPekerjaan" name="Data Wali - Pekerjaan" data-options="job"></select></div>
+                <div class="field-block"><label for="waliPenghasilan">Penghasilan</label><select id="waliPenghasilan" name="Data Wali - Penghasilan" data-options="income"></select></div>
+                <div class="field-block span-three"><label for="waliNik">NIK wali</label><input id="waliNik" name="Data Wali - NIK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16"><span class="field-error" aria-live="polite"></span></div>
+              </div>
+            </div>
+            <div class="form-grid three">
+              <div class="field-block"><label for="penerimaKps">Penerima KPS</label><select id="penerimaKps" name="Penerima KPS" data-required="true"><option value="">Pilih</option><option>Ya</option><option>Tidak</option></select><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two is-hidden" id="noKpsWrap"><label for="noKps">Nomor KPS</label><input id="noKps" name="No. KPS" type="text"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="penerimaKip">Penerima KIP</label><select id="penerimaKip" name="Penerima KIP"><option value="">Pilih jika diketahui</option><option>Ya</option><option>Tidak</option></select></div>
+              <div class="field-block"><label for="nomorKip">Nomor KIP</label><input id="nomorKip" name="Nomor KIP" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="namaKip">Nama di KIP</label><input id="namaKip" name="Nama di KIP" class="uppercase" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="nomorKks">Nomor KKS</label><input id="nomorKks" name="Nomor KKS" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="bank">Bank</label><input id="bank" name="Bank" class="uppercase" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="rekening">Nomor rekening</label><input id="rekening" name="Nomor Rekening Bank" type="text" inputmode="numeric" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="rekeningNama">Rekening atas nama</label><input id="rekeningNama" name="Rekening Atas Nama" class="uppercase" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="layakPip">Layak PIP</label><select id="layakPip" name="Layak PIP (usulan dari sekolah)"><option value="">Pilih jika diketahui</option><option>Ya</option><option>Tidak</option></select></div>
+              <div class="field-block span-two"><label for="alasanPip">Alasan layak PIP</label><input id="alasanPip" name="Alasan Layak PIP" type="text" placeholder="Jika diusulkan"></div>
+              <div class="field-block span-three"><label for="kebutuhanKhusus">Kebutuhan khusus</label><input id="kebutuhanKhusus" name="Kebutuhan Khusus" type="text" placeholder="Kosongkan jika tidak ada"></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="PMB" data-title="Dokumen">
+            <div class="step-heading"><span>05</span><div><h2>Dokumen dan riwayat sekolah</h2><p>Isi nomor dokumen yang tersedia.</p></div></div>
+            <div class="form-grid two">
+              <div class="field-block"><label for="rombel">Rombel saat ini</label><input id="rombel" name="Rombel Saat Ini" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="noUjian">Nomor peserta ujian nasional</label><input id="noUjian" name="No Peserta Ujian Nasional" type="text" placeholder="Disarankan jika ada"></div>
+              <div class="field-block"><label for="noIjazah">Nomor seri ijazah</label><input id="noIjazah" name="No Seri Ijazah" type="text" placeholder="Disarankan jika ada"></div>
+              <div class="field-block"><label for="noAkta">Nomor registrasi akta lahir</label><input id="noAkta" name="No Registrasi Akta Lahir" class="uppercase" type="text" data-required="true" placeholder="8101-LT-30042018-0060"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="anakKe">Anak ke-berapa</label><input id="anakKe" name="Anak ke-berapa" class="digits" type="text" inputmode="numeric" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="noKk">Nomor KK</label><input id="noKk" name="No KK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="PMB" data-title="Kesehatan & Lokasi">
+            <div class="step-heading"><span>06</span><div><h2>Kesehatan dan lokasi</h2><p>Gunakan ukuran terbaru murid.</p></div></div>
+            <div class="measure-note"><strong>Belum memiliki alat ukur?</strong><span>Gunakan perkiraan yang masuk akal berdasarkan referensi usia anak di internet, lalu sekolah dapat memverifikasi kembali.</span></div>
+            <div class="form-grid four">
+              <div class="field-block"><label for="berat">Berat badan (kg)</label><input id="berat" name="Berat Badan" class="decimal" type="text" inputmode="decimal" data-required="true" placeholder="Contoh: 22.5"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="tinggi">Tinggi badan (cm)</label><input id="tinggi" name="Tinggi Badan" class="decimal" type="text" inputmode="decimal" data-required="true" placeholder="Contoh: 118"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="lingkar">Lingkar kepala (cm)</label><input id="lingkar" name="Lingkar Kepala" class="decimal" type="text" inputmode="decimal" data-required="true" placeholder="Contoh: 51"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="saudara">Jumlah saudara kandung</label><input id="saudara" name="Jml. Saudara Kandung" class="digits" type="text" inputmode="numeric" data-required="true" placeholder="Isi 0 jika tidak ada"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="jarak">Jarak rumah ke sekolah (km)</label><input id="jarak" name="Jarak Rumah ke Sekolah (KM)" class="decimal" type="text" inputmode="decimal" placeholder="Jika diketahui"></div>
+              <div class="field-block"><label for="lintang">Lintang</label><input id="lintang" name="Lintang" type="text" readonly placeholder="Belum diambil"></div>
+              <div class="field-block"><label for="bujur">Bujur</label><input id="bujur" name="Bujur" type="text" readonly placeholder="Belum diambil"></div>
+              <div class="span-four"><button type="button" class="btn btn-location" id="locationBtn">Gunakan lokasi saya</button><p id="locationStatus" class="location-status" aria-live="polite">Izinkan akses lokasi saat diminta oleh ponsel.</p></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="MUTASI_MASUK" data-title="Data Murid">
+            <div class="step-heading"><span>01</span><div><h2>Mutasi masuk peserta didik</h2><p>Isi identitas murid dan sekolah asal.</p></div></div>
+            <input type="hidden" name="Mutasi Peserta Didik" value="Mutasi masuk peserta didik">
+            <div class="form-grid two">
+              <div class="field-block span-two"><label for="mutasiMasukNama">Nama lengkap murid</label><input id="mutasiMasukNama" name="Mutasi - Nama Lengkap" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="mutasiMasukNisn">NISN murid</label><input id="mutasiMasukNisn" name="Mutasi - NISN Murid" class="digits" type="text" inputmode="numeric" maxlength="10" data-length="10" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="mutasiMasukNik">NIK murid</label><input id="mutasiMasukNik" name="NIK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="sumberData">Sumber data</label><input id="sumberData" name="Sumber Data" type="text" value="Dapodik" readonly data-required="true"></div>
+              <div class="field-block"><label for="propinsi">Propinsi</label><input id="propinsi" name="Propinsi" type="text" value="Prov. Maluku" readonly data-required="true"></div>
+              <div class="field-block"><label for="kabupaten">Kabupaten / kota</label><input id="kabupaten" name="Kabupaten/Kota" type="text" value="Kab. Maluku Tengah" readonly data-required="true"></div>
+              <div class="field-block"><label for="kecamatanMutasi">Kecamatan</label><input id="kecamatanMutasi" name="Kecamatan Mutasi" type="text" value="Kec. Amahai" readonly data-required="true"></div>
+              <div class="field-block"><label for="rombelTujuan">Rombel tujuan</label><input id="rombelTujuan" name="Rombel Tujuan" class="uppercase" type="text" data-required="true" placeholder="Contoh: 3A"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="sekolahAsalMutasi">Nama sekolah asal lengkap</label><input id="sekolahAsalMutasi" name="Mutasi - Sekolah Asal Lengkap" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="kabAsalMutasi">Kabupaten / kota sekolah asal</label><input id="kabAsalMutasi" name="Mutasi - Kabupaten Sekolah Asal" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="kecAsalMutasi">Kecamatan sekolah asal</label><input id="kecAsalMutasi" name="Mutasi - Kecamatan Sekolah Asal" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="npsnAsalMutasi">NPSN sekolah asal</label><input id="npsnAsalMutasi" name="Mutasi - NPSN Sekolah Asal" class="digits" type="text" inputmode="numeric" maxlength="8" data-length="8" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="hpMutasi">HP orang tua / wali</label><input id="hpMutasi" name="HP" class="phone" type="tel" inputmode="tel" data-required="true" placeholder="08… atau +62…"><span class="field-error" aria-live="polite"></span></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="MUTASI_KELUAR" data-title="Data Keluar">
+            <div class="step-heading"><span>01</span><div><h2>Mutasi keluar peserta didik</h2><p>Pastikan identitas cocok dengan data sekolah.</p></div></div>
+            <div class="form-grid two">
+              <div class="field-block span-two"><label for="mutasiKeluarNama">Nama lengkap murid</label><input id="mutasiKeluarNama" name="Nama Mutasi Keluar" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="mutasiKeluarNisn">NISN murid</label><input id="mutasiKeluarNisn" name="NISN Mutasi Keluar" class="digits" type="text" inputmode="numeric" maxlength="10" data-length="10" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="mutasiKeluarNik">NIK murid</label><input id="mutasiKeluarNik" name="NIK Mutasi Keluar" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="statusKeluar">Jenis keluar</label><select id="statusKeluar" name="Status Keluar" data-required="true"><option value="">Pilih</option><option>Mutasi</option><option>Dikeluarkan</option><option>Mengundurkan diri</option><option>Putus Sekolah</option><option>Wafat</option><option>Hilang</option></select><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="tanggalKeluar">Tanggal keluar</label><input id="tanggalKeluar" name="Tanggal Keluar" class="date-id" type="text" inputmode="numeric" maxlength="10" data-required="true" placeholder="dd-mm-yyyy"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="alasanKeluar">Alasan</label><textarea id="alasanKeluar" name="Alasan" rows="3" data-required="true"></textarea><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="sekolahTujuan">Sekolah tujuan</label><input id="sekolahTujuan" name="Sekolah Tujuan" class="uppercase" type="text" placeholder="Isi jika statusnya Mutasi"></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="UPDATE" data-title="Identitas Murid">
+            <div class="step-heading"><span>01</span><div><h2>Temukan data murid</h2><p>Gunakan identitas yang sudah terdaftar.</p></div></div>
+            <div class="form-grid two">
+              <div class="field-block span-two"><label for="updateNama">Nama lengkap murid</label><input id="updateNama" name="Nama Pembaruan" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="updateNisn">NISN murid</label><input id="updateNisn" name="NISN Pembaruan" class="digits" type="text" inputmode="numeric" maxlength="10" data-length="10" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="updateNik">NIK murid</label><input id="updateNik" name="NIK Pembaruan" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+            </div>
+          </section>
+
+          <section class="form-step" data-services="UPDATE" data-title="Data Terbaru">
+            <div class="step-heading"><span>02</span><div><h2>Data terbaru</h2><p>Isi kondisi murid pada tahun ini.</p></div></div>
+            <div class="form-grid four">
+              <div class="field-block span-two"><label for="rombelBaru">Rombel baru</label><select id="rombelBaru" name="Rombel Baru" data-required="true" data-options="rombel"></select><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="hpUpdate">HP orang tua / wali</label><input id="hpUpdate" name="HP Pembaruan" class="phone" type="tel" inputmode="tel" data-required="true" placeholder="08… atau +62…"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="kodePosUpdate">Kode pos</label><input id="kodePosUpdate" name="Kode Pos Pembaruan" class="digits" type="text" inputmode="numeric" maxlength="5" data-length="5" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-four"><label for="alamatUpdate">Alamat terbaru</label><textarea id="alamatUpdate" name="Alamat Pembaruan" rows="2" data-required="true"></textarea><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="kelurahanUpdate">Kelurahan / desa</label><input id="kelurahanUpdate" name="Kelurahan Pembaruan" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="kecamatanUpdate">Kecamatan</label><input id="kecamatanUpdate" name="Kecamatan Pembaruan" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-four"><label for="transportUpdate">Alat transportasi</label><select id="transportUpdate" name="Alat Transportasi Pembaruan"><option value="">Pilih jika berubah</option><option>Jalan kaki</option><option>Angkutan umum/bus/pete-pete</option><option>Mobil/bus antar jemput</option><option>Kereta api</option><option>Ojek</option><option>Andong/bendi/sado/dokar/delman/becak</option><option>Perahu penyeberangan/rakit/getek</option><option>Kuda</option><option>Sepeda</option></select></div>
+              <div class="field-block"><label for="beratUpdate">Berat badan (kg)</label><input id="beratUpdate" name="Berat Badan Pembaruan" class="decimal" type="text" inputmode="decimal" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="tinggiUpdate">Tinggi badan (cm)</label><input id="tinggiUpdate" name="Tinggi Badan Pembaruan" class="decimal" type="text" inputmode="decimal" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="lingkarUpdate">Lingkar kepala (cm)</label><input id="lingkarUpdate" name="Lingkar Kepala Pembaruan" class="decimal" type="text" inputmode="decimal" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="saudaraUpdate">Jumlah saudara kandung</label><input id="saudaraUpdate" name="Jml. Saudara Kandung Pembaruan" class="digits" type="text" inputmode="numeric" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="pekerjaanAyahUpdate">Pekerjaan ayah sekarang</label><select id="pekerjaanAyahUpdate" name="Pekerjaan Ayah Pembaruan" data-options="job"></select></div>
+              <div class="field-block span-two"><label for="penghasilanAyahUpdate">Penghasilan ayah sekarang</label><select id="penghasilanAyahUpdate" name="Penghasilan Ayah Pembaruan" data-options="income"></select></div>
+              <div class="field-block span-two"><label for="pekerjaanIbuUpdate">Pekerjaan ibu sekarang</label><select id="pekerjaanIbuUpdate" name="Pekerjaan Ibu Pembaruan" data-options="job"></select></div>
+              <div class="field-block span-two"><label for="penghasilanIbuUpdate">Penghasilan ibu sekarang</label><select id="penghasilanIbuUpdate" name="Penghasilan Ibu Pembaruan" data-options="income"></select></div>
+              <div class="field-block span-four"><label for="kebutuhanUpdate">Kebutuhan khusus terbaru</label><input id="kebutuhanUpdate" name="Kebutuhan Khusus Pembaruan" type="text" placeholder="Kosongkan jika tidak ada"></div>
+            </div>
+          </section>
+
+          <section class="form-step review-step" data-services="PMB,MUTASI_MASUK,MUTASI_KELUAR,UPDATE" data-title="Periksa & Kirim">
+            <div class="step-heading"><span>✓</span><div><h2>Periksa sebelum dikirim</h2><p>Pastikan sekolah dan identitas murid sudah benar.</p></div></div>
+            <div id="reviewContent" class="review-content"></div>
+            <label class="confirm-line"><input id="confirmation" type="checkbox" data-required="true"><span>Saya menyatakan data yang diisi sesuai dokumen dan keadaan sebenarnya.</span></label>
+            <span class="field-error confirm-error" aria-live="polite"></span>
+          </section>
+
+          <div class="wizard-actions">
+            <button type="button" class="btn btn-secondary" id="prevBtn">← Sebelumnya</button>
+            <button type="button" class="btn btn-primary" id="nextBtn">Berikutnya →</button>
+            <button type="button" class="btn btn-submit is-hidden" id="submitBtn">Kirim data</button>
+          </div>
+        </form>
+        <iframe name="submitFrame" id="submitFrame" title="Proses pengiriman data" class="submit-frame"></iframe>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <div id="resultModal" class="modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="resultTitle">
+    <div class="modal-card">
+      <div id="resultIcon" class="result-icon">✓</div>
+      <h2 id="resultTitle">Data berhasil dikirim</h2>
+      <p id="resultMessage">Data telah masuk ke pusat data sekolah.</p>
+      <button type="button" class="btn btn-primary btn-wide" id="finishBtn">Kembali ke halaman awal</button>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>
