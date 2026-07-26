@@ -1,7 +1,7 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVGAmUd-BZwuFOXYGrdR7JR8fnkEuSjq5Xj0x9qLqcICg_57qMkfSBRfJNVevU9OtO/exec";
 const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V2";
-const FRONTEND_VERSION = "2026.07.27-2";
+const FRONTEND_VERSION = "2026.07.27-3";
 
 const SERVICE_CONFIG = {
   PMB: { title: "Pendaftaran Murid Baru", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendaftaran" },
