@@ -112,7 +112,7 @@
           <div><span>Sekolah</span><strong id="summarySchool">—</strong></div>
         </div>
         <ol id="desktopStepper" class="desktop-stepper" aria-label="Tahapan formulir"></ol>
-        <p class="privacy-note">Siapkan KK, akta lahir, NISN, dan data orang tua sebelum memulai.</p>
+        <p class="privacy-note">Siapkan KK, akta lahir, NISN, dan data orang tua sebelum memulai. Draf isian tersimpan sementara di tab ini sampai berhasil dikirim.</p>
       </aside>
 
       <div class="wizard-card">
@@ -171,6 +171,16 @@
                 <span class="field-error" aria-live="polite"></span>
               </div>
               <div class="field-block">
+                <label for="hobi">Hobi</label>
+                <select id="hobi" name="Hobi" data-required="true" data-options="hobby"></select>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
+                <label for="citaCita">Cita-cita</label>
+                <select id="citaCita" name="Cita-Cita" data-required="true" data-options="aspiration"></select>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block">
                 <label for="asalPendidikan">Asal pendidikan sebelum SD</label>
                 <select id="asalPendidikan" name="Asal Pendidikan" data-required="true"><option value="">Pilih</option><option>TK/PAUD</option><option>Belum pernah TK/PAUD</option></select>
                 <span class="field-error" aria-live="polite"></span>
@@ -188,7 +198,7 @@
             <div class="form-grid four">
               <div class="field-block span-four">
                 <label for="alamat">Alamat lengkap</label>
-                <textarea id="alamat" name="Alamat" rows="3" data-required="true" placeholder="Jalan, lingkungan, patokan rumah"></textarea>
+                <textarea id="alamat" name="Alamat" class="propercase" rows="3" data-required="true" placeholder="Jalan, lingkungan, patokan rumah"></textarea>
                 <span class="field-error" aria-live="polite"></span>
               </div>
               <div class="field-block"><label for="rt">RT</label><input id="rt" name="RT" class="digits" type="text" inputmode="numeric" maxlength="3" placeholder="Jika ada"></div>
@@ -259,8 +269,8 @@
               <div class="field-block"><label for="rekening">Nomor rekening</label><input id="rekening" name="Nomor Rekening Bank" type="text" inputmode="numeric" placeholder="Jika ada"></div>
               <div class="field-block"><label for="rekeningNama">Rekening atas nama</label><input id="rekeningNama" name="Rekening Atas Nama" class="uppercase" type="text" placeholder="Jika ada"></div>
               <div class="field-block"><label for="layakPip">Layak PIP</label><select id="layakPip" name="Layak PIP (usulan dari sekolah)"><option value="">Pilih jika diketahui</option><option>Ya</option><option>Tidak</option></select></div>
-              <div class="field-block span-two"><label for="alasanPip">Alasan layak PIP</label><input id="alasanPip" name="Alasan Layak PIP" type="text" placeholder="Jika diusulkan"></div>
-              <div class="field-block span-three"><label for="kebutuhanKhusus">Kebutuhan khusus</label><input id="kebutuhanKhusus" name="Kebutuhan Khusus" type="text" placeholder="Kosongkan jika tidak ada"></div>
+              <div class="field-block span-two"><label for="alasanPip">Alasan layak PIP</label><input id="alasanPip" name="Alasan Layak PIP" class="propercase" type="text" placeholder="Jika diusulkan"></div>
+              <div class="field-block span-three"><label for="kebutuhanKhusus">Kebutuhan khusus</label><input id="kebutuhanKhusus" name="Kebutuhan Khusus" class="propercase" type="text" placeholder="Kosongkan jika tidak ada"></div>
             </div>
           </section>
 
@@ -319,7 +329,7 @@
               <div class="field-block"><label for="mutasiKeluarNik">NIK murid</label><input id="mutasiKeluarNik" name="NIK Mutasi Keluar" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block"><label for="statusKeluar">Jenis keluar</label><select id="statusKeluar" name="Status Keluar" data-required="true"><option value="">Pilih</option><option>Mutasi</option><option>Dikeluarkan</option><option>Mengundurkan diri</option><option>Putus Sekolah</option><option>Wafat</option><option>Hilang</option></select><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block"><label for="tanggalKeluar">Tanggal keluar</label><input id="tanggalKeluar" name="Tanggal Keluar" class="date-id" type="text" inputmode="numeric" maxlength="10" data-required="true" placeholder="dd-mm-yyyy"><span class="field-error" aria-live="polite"></span></div>
-              <div class="field-block span-two"><label for="alasanKeluar">Alasan</label><textarea id="alasanKeluar" name="Alasan" rows="3" data-required="true"></textarea><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="alasanKeluar">Alasan</label><textarea id="alasanKeluar" name="Alasan" class="propercase" rows="3" data-required="true"></textarea><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block span-two"><label for="sekolahTujuan">Sekolah tujuan</label><input id="sekolahTujuan" name="Sekolah Tujuan" class="uppercase" type="text" placeholder="Isi jika statusnya Mutasi"></div>
             </div>
           </section>
@@ -337,9 +347,11 @@
             <div class="step-heading"><span>02</span><div><h2>Data terbaru</h2><p>Isi kondisi murid pada tahun ini.</p></div></div>
             <div class="form-grid four">
               <div class="field-block span-two"><label for="rombelBaru">Rombel baru</label><select id="rombelBaru" name="Rombel Baru" data-required="true" data-options="rombel"></select><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="hobiUpdate">Hobi terbaru</label><select id="hobiUpdate" name="Hobi Pembaruan" data-options="hobby"></select></div>
+              <div class="field-block"><label for="citaCitaUpdate">Cita-cita terbaru</label><select id="citaCitaUpdate" name="Cita-Cita Pembaruan" data-options="aspiration"></select></div>
               <div class="field-block"><label for="hpUpdate">HP orang tua / wali</label><input id="hpUpdate" name="HP Pembaruan" class="phone" type="tel" inputmode="tel" data-required="true" placeholder="08… atau +62…"><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block"><label for="kodePosUpdate">Kode pos</label><input id="kodePosUpdate" name="Kode Pos Pembaruan" class="digits" type="text" inputmode="numeric" maxlength="5" data-length="5" data-required="true"><span class="field-error" aria-live="polite"></span></div>
-              <div class="field-block span-four"><label for="alamatUpdate">Alamat terbaru</label><textarea id="alamatUpdate" name="Alamat Pembaruan" rows="2" data-required="true"></textarea><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-four"><label for="alamatUpdate">Alamat terbaru</label><textarea id="alamatUpdate" name="Alamat Pembaruan" class="propercase" rows="2" data-required="true"></textarea><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block span-two"><label for="kelurahanUpdate">Kelurahan / desa</label><input id="kelurahanUpdate" name="Kelurahan Pembaruan" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block span-two"><label for="kecamatanUpdate">Kecamatan</label><input id="kecamatanUpdate" name="Kecamatan Pembaruan" class="propercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block span-four"><label for="transportUpdate">Alat transportasi</label><select id="transportUpdate" name="Alat Transportasi Pembaruan"><option value="">Pilih jika berubah</option><option>Jalan kaki</option><option>Angkutan umum/bus/pete-pete</option><option>Mobil/bus antar jemput</option><option>Kereta api</option><option>Ojek</option><option>Andong/bendi/sado/dokar/delman/becak</option><option>Perahu penyeberangan/rakit/getek</option><option>Kuda</option><option>Sepeda</option></select></div>
@@ -351,7 +363,7 @@
               <div class="field-block span-two"><label for="penghasilanAyahUpdate">Penghasilan ayah sekarang</label><select id="penghasilanAyahUpdate" name="Penghasilan Ayah Pembaruan" data-options="income"></select></div>
               <div class="field-block span-two"><label for="pekerjaanIbuUpdate">Pekerjaan ibu sekarang</label><select id="pekerjaanIbuUpdate" name="Pekerjaan Ibu Pembaruan" data-options="job"></select></div>
               <div class="field-block span-two"><label for="penghasilanIbuUpdate">Penghasilan ibu sekarang</label><select id="penghasilanIbuUpdate" name="Penghasilan Ibu Pembaruan" data-options="income"></select></div>
-              <div class="field-block span-four"><label for="kebutuhanUpdate">Kebutuhan khusus terbaru</label><input id="kebutuhanUpdate" name="Kebutuhan Khusus Pembaruan" type="text" placeholder="Kosongkan jika tidak ada"></div>
+              <div class="field-block span-four"><label for="kebutuhanUpdate">Kebutuhan khusus terbaru</label><input id="kebutuhanUpdate" name="Kebutuhan Khusus Pembaruan" class="propercase" type="text" placeholder="Kosongkan jika tidak ada"></div>
             </div>
           </section>
 

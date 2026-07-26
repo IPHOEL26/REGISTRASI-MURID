@@ -1,5 +1,6 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVGAmUd-BZwuFOXYGrdR7JR8fnkEuSjq5Xj0x9qLqcICg_57qMkfSBRfJNVevU9OtO/exec";
+const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V2";
 
 const SERVICE_CONFIG = {
   PMB: { title: "Pendaftaran Murid Baru", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendaftaran" },
@@ -30,6 +31,22 @@ const OPTIONS = {
     "Kelas 5", "Kelas 5-A", "Kelas 5-B", "Kelas 5-C", "Kelas 5-D", "Kelas 5-E",
     "Kelas 6", "Kelas 6-A", "Kelas 6-B", "Kelas 6-C", "Kelas 6-D", "Kelas 6-E",
   ],
+  hobby: [
+    "Belanja", "Berkemah", "Berlari", "Bermain Biola", "Bermain Bola", "Bermain Bola Tenis",
+    "Bermain Boneka", "Bermain Bulu Tangkis", "Bermain Gitar", "Bermain Musik", "Bermain Piano",
+    "Berselancar", "Fitness", "Fotografi", "Jogging", "Kesenian", "Lainnya", "Main Puzzle",
+    "Makan", "Memancing", "Membaca", "Mendaki", "Menggambar", "Menjahit", "Menulis",
+    "Mewarnai", "Olah Raga", "Traveling",
+  ],
+  aspiration: [
+    "Arsitek", "Astronot", "Atlet", "Atlet E-Sport Profesional", "Atlit Olahraga", "Bidan",
+    "Content Creator", "Da'i / Ustadz", "Designer", "Dokter", "Entertainer / Pekerja Seni",
+    "Guru/Dosen", "Koki", "Lainnya", "Masinis Kereta Api", "Pegawai Negeri Sipil / PNS",
+    "Pelaut", "Pemadam Kebakaran", "Pembalap", "Pembawa Acara / Master Ceremony", "Pendeta",
+    "Pengacara", "Penghafal Al-Qur'an", "Pengusaha / Bisnismen", "Penulis", "Penyiar Radio",
+    "Perawat", "Perawat / Suster", "Pilot", "PNS", "Polisi", "Politikus", "Presiden",
+    "Seni/Lukis/Artis/Sejenis", "TNI/Polri", "Translator", "Vloger", "Wartawan", "Wiraswasta",
+  ],
 };
 
 const serviceScreen = document.getElementById("serviceScreen");
@@ -58,11 +75,15 @@ const resultModal = document.getElementById("resultModal");
 const resultIcon = document.getElementById("resultIcon");
 const resultTitle = document.getElementById("resultTitle");
 const resultMessage = document.getElementById("resultMessage");
+const finishBtn = document.getElementById("finishBtn");
 
 let selectedService = "PMB";
 let currentStep = 0;
 let pendingToken = "";
 let responseTimer = null;
+let draftTimer = null;
+let lastSubmissionSucceeded = false;
+let isRestoringDraft = false;
 
 function populateOptionLists() {
   document.querySelectorAll("select[data-options]").forEach(select => {
@@ -85,6 +106,67 @@ function showToast(message, type = "") {
   toast.textContent = message;
   toast.className = `toast show ${type}`.trim();
   window.setTimeout(() => { toast.className = "toast"; }, 3600);
+}
+
+function saveDraftImmediately() {
+  if (isRestoringDraft || !formYear.value || !formSchool.value || !formService.value) return;
+  const values = {};
+  Array.from(form.elements).forEach(field => {
+    if (!field.id) return;
+    values[field.id] = field.type === "checkbox" ? field.checked : field.value;
+  });
+  try {
+    sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
+      version: 2,
+      savedAt: Date.now(),
+      selectedService,
+      currentStep,
+      year: formYear.value,
+      school: formSchool.value,
+      pendingToken,
+      values,
+    }));
+  } catch (error) {
+    // Form tetap dapat digunakan bila penyimpanan sementara dibatasi browser.
+  }
+}
+
+function scheduleDraftSave() {
+  window.clearTimeout(draftTimer);
+  draftTimer = window.setTimeout(saveDraftImmediately, 250);
+}
+
+function clearDraft() {
+  window.clearTimeout(draftTimer);
+  try { sessionStorage.removeItem(DRAFT_STORAGE_KEY); } catch (error) { /* Abaikan. */ }
+}
+
+function restoreDraft() {
+  let draft;
+  try { draft = JSON.parse(sessionStorage.getItem(DRAFT_STORAGE_KEY) || "null"); }
+  catch (error) { clearDraft(); return false; }
+  if (!draft || draft.version !== 2 || !SERVICE_CONFIG[draft.selectedService] || !draft.school) return false;
+
+  isRestoringDraft = true;
+  selectedService = draft.selectedService;
+  contextYear.value = draft.year || contextYear.value;
+  contextSchool.value = draft.school;
+  currentStep = 0;
+  startForm();
+  Object.entries(draft.values || {}).forEach(([id, value]) => {
+    const field = document.getElementById(id);
+    if (!field) return;
+    if (field.type === "checkbox") field.checked = id === "confirmation" ? false : Boolean(value);
+    else field.value = value;
+  });
+  pendingToken = draft.pendingToken || "";
+  requestToken.value = pendingToken;
+  applyConditionalRequirements();
+  currentStep = Math.max(0, Math.min(Number(draft.currentStep) || 0, getActiveSteps().length - 1));
+  updateStep();
+  isRestoringDraft = false;
+  showToast("Draf sebelumnya dipulihkan. Silakan lanjutkan dari bagian terakhir.", "success");
+  return true;
 }
 
 function chooseService(service) {
@@ -129,6 +211,7 @@ function startForm() {
   setActiveControls();
   showScreen(wizardScreen);
   updateStep();
+  saveDraftImmediately();
 }
 
 function updateStep() {
@@ -150,6 +233,7 @@ function updateStep() {
   nextBtn.classList.toggle("is-hidden", currentStep === steps.length - 1);
   submitBtn.classList.toggle("is-hidden", currentStep !== steps.length - 1);
   if (currentStep === steps.length - 1) renderReview();
+  scheduleDraftSave();
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -343,12 +427,13 @@ function submitData() {
     return;
   }
 
-  pendingToken = createToken();
+  pendingToken = pendingToken || createToken();
   requestToken.value = pendingToken;
   form.action = WEB_APP_URL;
   submitBtn.disabled = true;
   submitBtn.textContent = "Mengirim data…";
   showToast("Data sedang dikirim. Jangan tutup halaman ini.");
+  saveDraftImmediately();
 
   window.clearTimeout(responseTimer);
   responseTimer = window.setTimeout(() => {
@@ -362,10 +447,13 @@ function submitData() {
 
 function showResult(success, message) {
   window.clearTimeout(responseTimer);
+  lastSubmissionSucceeded = success;
   resultIcon.textContent = success ? "✓" : "!";
   resultIcon.classList.toggle("error", !success);
   resultTitle.textContent = success ? "Data berhasil dikirim" : "Data belum tersimpan";
   resultMessage.textContent = message || (success ? "Data telah masuk ke pusat data sekolah." : "Silakan periksa data dan coba lagi.");
+  finishBtn.textContent = success ? "Selesai dan kembali ke awal" : "Kembali periksa data";
+  if (success) clearDraft();
   resultModal.classList.add("show");
   resultModal.setAttribute("aria-hidden", "false");
 }
@@ -373,6 +461,8 @@ function showResult(success, message) {
 function returnHome() {
   window.clearTimeout(responseTimer);
   pendingToken = "";
+  lastSubmissionSucceeded = false;
+  clearDraft();
   currentStep = 0;
   form.reset();
   setupYear();
@@ -384,6 +474,20 @@ function returnHome() {
   submitBtn.disabled = false;
   clearAllErrors();
   showScreen(serviceScreen);
+}
+
+function closeResultAndResume() {
+  resultModal.classList.remove("show");
+  resultModal.setAttribute("aria-hidden", "true");
+  submitBtn.disabled = false;
+  submitBtn.textContent = SERVICE_CONFIG[selectedService].submit;
+  renderReview();
+  showToast("Semua isian tetap tersimpan. Periksa pesan kesalahan, lalu kirim kembali.");
+}
+
+function confirmDiscardAndReturnHome() {
+  if (formYear.value && !window.confirm("Kembali ke halaman awal dan hapus draf isian ini?")) return;
+  returnHome();
 }
 
 document.querySelectorAll("[data-service-choice]").forEach(button => {
@@ -399,9 +503,12 @@ document.getElementById("backToServices").addEventListener("click", () => {
 });
 document.getElementById("backFromContext").addEventListener("click", () => showScreen(serviceScreen));
 document.getElementById("startFormBtn").addEventListener("click", startForm);
-document.getElementById("changeServiceBtn").addEventListener("click", returnHome);
-document.getElementById("brandHome").addEventListener("click", event => { event.preventDefault(); returnHome(); });
-document.getElementById("finishBtn").addEventListener("click", returnHome);
+document.getElementById("changeServiceBtn").addEventListener("click", confirmDiscardAndReturnHome);
+document.getElementById("brandHome").addEventListener("click", event => { event.preventDefault(); confirmDiscardAndReturnHome(); });
+document.getElementById("finishBtn").addEventListener("click", () => {
+  if (lastSubmissionSucceeded) returnHome();
+  else closeResultAndResume();
+});
 
 prevBtn.addEventListener("click", () => { if (currentStep > 0) { currentStep -= 1; updateStep(); } });
 nextBtn.addEventListener("click", () => {
@@ -424,20 +531,24 @@ document.addEventListener("input", event => {
   const field = event.target;
   if (!(field instanceof HTMLInputElement) && !(field instanceof HTMLTextAreaElement)) return;
   if (field.classList.contains("uppercase")) field.value = field.value.toLocaleUpperCase("id-ID");
+  if (field.classList.contains("propercase")) field.value = properCase(field.value);
   if (field.classList.contains("digits")) field.value = field.value.replace(/\D/g, "");
   if (field.classList.contains("decimal")) field.value = field.value.replace(",", ".").replace(/[^\d.]/g, "").replace(/(\..*)\./g, "$1");
   if (field.classList.contains("date-id")) field.value = maskDate(field.value);
   clearFieldError(field);
+  scheduleDraftSave();
 });
 document.addEventListener("change", event => {
   const field = event.target;
   if (field instanceof HTMLInputElement || field instanceof HTMLSelectElement || field instanceof HTMLTextAreaElement) clearFieldError(field);
+  scheduleDraftSave();
 });
 document.addEventListener("focusout", event => {
   const field = event.target;
   if (!(field instanceof HTMLInputElement) && !(field instanceof HTMLTextAreaElement)) return;
   if (field.classList.contains("propercase")) field.value = properCase(field.value.trim());
   if (field.classList.contains("phone")) field.value = normalizePhone(field.value);
+  scheduleDraftSave();
 });
 
 document.getElementById("locationBtn").addEventListener("click", () => {
@@ -473,7 +584,9 @@ window.addEventListener("message", event => {
   showResult(data.status === "success", data.message);
 });
 
+window.addEventListener("beforeunload", saveDraftImmediately);
+
 populateOptionLists();
 setupYear();
 applyConditionalRequirements();
-showScreen(serviceScreen);
+if (!restoreDraft()) showScreen(serviceScreen);
