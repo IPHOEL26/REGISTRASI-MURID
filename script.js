@@ -1,13 +1,14 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
-const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbzVGAmUd-BZwuFOXYGrdR7JR8fnkEuSjq5Xj0x9qLqcICg_57qMkfSBRfJNVevU9OtO/exec";
-const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V3";
-const FRONTEND_VERSION = "2026.07.27-5";
+const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwPEtSmPfF6t-_atSrevfmSnie139fQXjNMcMG7pWmHYj4rFciuaXLTDtA_PWGHaRjO/exec";
+const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V4";
+const FRONTEND_VERSION = "2026.07.27-8";
 
 const SERVICE_CONFIG = {
-  PMB: { title: "Pendaftaran Murid Baru", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendaftaran" },
+  PMB: { title: "Pendataan Murid Baru / Belum Terdata", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendataan lengkap" },
   MUTASI_MASUK: { title: "Mutasi Masuk", value: "MUTASI MASUK", submit: "Kirim data mutasi masuk" },
   MUTASI_KELUAR: { title: "Mutasi Keluar", value: "MUTASI KELUAR", submit: "Kirim data mutasi keluar" },
   UPDATE: { title: "Pembaruan Data Tahunan", value: "PEMBARUAN TAHUNAN", submit: "Kirim pembaruan data" },
+  UNLOCK_REQUEST: { title: "Permintaan Buka Rombel", value: "PERMINTAAN BUKA ROMBEL", submit: "Kirim permintaan ke operator" },
 };
 
 const OPTIONS = {
@@ -26,6 +27,14 @@ const OPTIONS = {
     "< Rp1.000.000", "Rp1.000.001 - Rp3.000.000",
   ],
   rombel: [
+    "Kelas 2", "Kelas 2-A", "Kelas 2-B", "Kelas 2-C", "Kelas 2-D", "Kelas 2-E",
+    "Kelas 3", "Kelas 3-A", "Kelas 3-B", "Kelas 3-C", "Kelas 3-D", "Kelas 3-E",
+    "Kelas 4", "Kelas 4-A", "Kelas 4-B", "Kelas 4-C", "Kelas 4-D", "Kelas 4-E",
+    "Kelas 5", "Kelas 5-A", "Kelas 5-B", "Kelas 5-C", "Kelas 5-D", "Kelas 5-E",
+    "Kelas 6", "Kelas 6-A", "Kelas 6-B", "Kelas 6-C", "Kelas 6-D", "Kelas 6-E",
+  ],
+  rombelAll: [
+    "Kelas 1", "Kelas 1-A", "Kelas 1-B", "Kelas 1-C", "Kelas 1-D", "Kelas 1-E",
     "Kelas 2", "Kelas 2-A", "Kelas 2-B", "Kelas 2-C", "Kelas 2-D", "Kelas 2-E",
     "Kelas 3", "Kelas 3-A", "Kelas 3-B", "Kelas 3-C", "Kelas 3-D", "Kelas 3-E",
     "Kelas 4", "Kelas 4-A", "Kelas 4-B", "Kelas 4-C", "Kelas 4-D", "Kelas 4-E",
@@ -59,9 +68,13 @@ const form = document.getElementById("registrationForm");
 const allSteps = Array.from(document.querySelectorAll(".form-step"));
 const contextYear = document.getElementById("contextYear");
 const contextSchool = document.getElementById("contextSchool");
+const contextAccessWrap = document.getElementById("contextAccessWrap");
+const contextAccessCode = document.getElementById("contextAccessCode");
+const startFormBtn = document.getElementById("startFormBtn");
 const formYear = document.getElementById("formYear");
 const formSchool = document.getElementById("formSchool");
 const formService = document.getElementById("formService");
+const formAccessCode = document.getElementById("formAccessCode");
 const requestToken = document.getElementById("requestToken");
 const desktopStepper = document.getElementById("desktopStepper");
 const mobileStepLabel = document.getElementById("mobileStepLabel");
@@ -77,6 +90,14 @@ const resultIcon = document.getElementById("resultIcon");
 const resultTitle = document.getElementById("resultTitle");
 const resultMessage = document.getElementById("resultMessage");
 const finishBtn = document.getElementById("finishBtn");
+const registrationCategory = document.getElementById("registrationCategory");
+const registrationRombel = document.getElementById("rombel");
+const fullRegistrationAccessWrap = document.getElementById("fullRegistrationAccessWrap");
+const fullRegistrationAccessCode = document.getElementById("fullRegistrationAccessCode");
+const updateSearch = document.getElementById("updateSearch");
+const updateStudentSelect = document.getElementById("updateStudentSelect");
+const priorStudentId = document.getElementById("priorStudentId");
+const rombelBaru = document.getElementById("rombelBaru");
 
 let selectedService = "PMB";
 let currentStep = 0;
@@ -86,12 +107,53 @@ let lastHandledToken = "";
 let draftTimer = null;
 let lastSubmissionSucceeded = false;
 let isRestoringDraft = false;
+let deferredDraft = null;
+let priorStudents = [];
 
 function populateOptionLists() {
   document.querySelectorAll("select[data-options]").forEach(select => {
     const values = OPTIONS[select.dataset.options] || [];
     select.innerHTML = '<option value="">Pilih</option>' + values.map(value => `<option>${value}</option>`).join("");
   });
+}
+
+function setSelectOptions(select, values, placeholder = "Pilih") {
+  const previous = select.value;
+  select.replaceChildren();
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = placeholder;
+  select.appendChild(blank);
+  values.forEach(value => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  if (values.includes(previous)) select.value = previous;
+}
+
+function updateRegistrationRombels(preferredValue = "") {
+  const category = registrationCategory.value;
+  const oldStudent = category === "SISWA KELAS 2-6 BELUM TERDATA";
+  let values = [];
+  if (category === "MURID BARU KELAS 1") values = OPTIONS.rombelAll.filter(value => /^Kelas 1(?:-|$)/.test(value));
+  if (oldStudent) values = OPTIONS.rombel;
+  setSelectOptions(registrationRombel, values, category ? "Pilih rombel saat ini" : "Pilih kategori terlebih dahulu");
+  registrationRombel.disabled = !values.length || selectedService !== "PMB";
+  fullRegistrationAccessWrap.classList.toggle("is-hidden", !oldStudent);
+  fullRegistrationAccessCode.disabled = selectedService !== "PMB" || !oldStudent;
+  fullRegistrationAccessCode.dataset.required = oldStudent ? "true" : "false";
+  if (!oldStudent) {
+    fullRegistrationAccessCode.value = "";
+    if (selectedService === "PMB") formAccessCode.value = "";
+    clearFieldError(fullRegistrationAccessCode);
+  }
+  if (preferredValue && values.includes(preferredValue)) registrationRombel.value = preferredValue;
+}
+
+function requiresSchoolAccess(service = selectedService) {
+  return service === "UPDATE" || service === "UNLOCK_REQUEST";
 }
 
 function setupYear() {
@@ -115,11 +177,12 @@ function saveDraftImmediately() {
   const values = {};
   Array.from(form.elements).forEach(field => {
     if (!field.id) return;
+    if (["formAccessCode", "fullRegistrationAccessCode"].includes(field.id)) return;
     values[field.id] = field.type === "checkbox" ? field.checked : field.value;
   });
   try {
     sessionStorage.setItem(DRAFT_STORAGE_KEY, JSON.stringify({
-      version: 3,
+      version: 4,
       savedAt: Date.now(),
       selectedService,
       currentStep,
@@ -147,14 +210,34 @@ function restoreDraft() {
   let draft;
   try { draft = JSON.parse(sessionStorage.getItem(DRAFT_STORAGE_KEY) || "null"); }
   catch (error) { clearDraft(); return false; }
-  if (!draft || draft.version !== 3 || !SERVICE_CONFIG[draft.selectedService] || !draft.school) return false;
+  if (!draft || draft.version !== 4 || !SERVICE_CONFIG[draft.selectedService] || !draft.school) return false;
 
-  isRestoringDraft = true;
   selectedService = draft.selectedService;
   contextYear.value = draft.year || contextYear.value;
   contextSchool.value = draft.school;
-  currentStep = 0;
-  startForm();
+  deferredDraft = draft;
+  updateAccessVisibility();
+  showScreen(contextScreen);
+  if (requiresSchoolAccess()) {
+    showToast("Draf ditemukan. Masukkan kembali kode akses sekolah untuk melanjutkan.", "success");
+  } else {
+    startForm();
+  }
+  return true;
+}
+
+function applyDeferredDraft() {
+  const draft = deferredDraft;
+  if (!draft) return;
+  isRestoringDraft = true;
+  if (selectedService === "PMB") {
+    registrationCategory.value = draft.values?.registrationCategory || "";
+    updateRegistrationRombels(draft.values?.rombel || "");
+  }
+  if (selectedService === "UPDATE") {
+    updateStudentSelect.value = draft.values?.updateStudentSelect || "";
+    selectPriorStudent();
+  }
   Object.entries(draft.values || {}).forEach(([id, value]) => {
     const field = document.getElementById(id);
     if (!field) return;
@@ -167,15 +250,22 @@ function restoreDraft() {
   currentStep = Math.max(0, Math.min(Number(draft.currentStep) || 0, getActiveSteps().length - 1));
   updateStep();
   isRestoringDraft = false;
+  deferredDraft = null;
   showToast("Draf sebelumnya dipulihkan. Silakan lanjutkan dari bagian terakhir.", "success");
-  return true;
 }
 
 function chooseService(service) {
   selectedService = service;
   currentStep = 0;
   clearAllErrors();
+  updateAccessVisibility();
   showScreen(contextScreen);
+}
+
+function updateAccessVisibility() {
+  const required = requiresSchoolAccess();
+  contextAccessWrap.classList.toggle("is-hidden", !required);
+  contextAccessCode.value = "";
 }
 
 function getActiveSteps() {
@@ -193,7 +283,7 @@ function setActiveControls() {
   });
 }
 
-function startForm() {
+async function startForm() {
   const school = contextSchool.value.trim();
   if (!school) {
     const wrapper = contextSchool.closest(".field-block");
@@ -203,17 +293,191 @@ function startForm() {
     return;
   }
 
-  formYear.value = contextYear.value;
-  formSchool.value = school;
-  formService.value = SERVICE_CONFIG[selectedService].value;
-  document.getElementById("summaryYear").textContent = contextYear.value;
-  document.getElementById("summarySchool").textContent = school;
-  document.getElementById("wizardTitle").textContent = SERVICE_CONFIG[selectedService].title;
-  submitBtn.textContent = SERVICE_CONFIG[selectedService].submit;
+  const accessCode = contextAccessCode.value.trim().toLocaleUpperCase("id-ID");
+  if (requiresSchoolAccess() && !accessCode) {
+    const wrapper = contextAccessCode.closest(".field-block");
+    wrapper.classList.add("has-error");
+    wrapper.querySelector(".field-error").textContent = "Masukkan kode akses sekolah dari operator.";
+    contextAccessCode.focus();
+    return;
+  }
+
+  if (!WEB_APP_URL || WEB_APP_URL.includes("PASTE_URL")) {
+    showToast("URL Web App belum dipasang pada script.js.", "error");
+    return;
+  }
+
+  startFormBtn.disabled = true;
+  startFormBtn.textContent = selectedService === "UPDATE" ? "Memuat daftar siswa…" : "Memeriksa akses…";
+  try {
+    if (selectedService === "UPDATE") {
+      const data = await requestJsonp("listStudents", {
+        year: contextYear.value,
+        school,
+        accessCode,
+      });
+      if (data.status !== "success") throw new Error(data.message || "Daftar siswa belum dapat dimuat.");
+      priorStudents = data.students || [];
+      populatePriorStudentOptions();
+      showToast(`${data.total} siswa kelas 1–5 tersedia. ${data.excludedGradeSix || 0} siswa kelas 6 tidak ditawarkan untuk kenaikan.`, "success");
+    } else if (selectedService === "UNLOCK_REQUEST") {
+      const data = await requestJsonp("validateAccess", {
+        year: contextYear.value,
+        school,
+        accessCode,
+      });
+      if (data.status !== "success") throw new Error(data.message || "Kode akses belum dapat diperiksa.");
+    }
+
+    formYear.value = contextYear.value;
+    formSchool.value = school;
+    formService.value = SERVICE_CONFIG[selectedService].value;
+    formAccessCode.value = requiresSchoolAccess() ? accessCode : "";
+    document.getElementById("summaryYear").textContent = contextYear.value;
+    document.getElementById("summarySchool").textContent = school;
+    document.getElementById("wizardTitle").textContent = SERVICE_CONFIG[selectedService].title;
+    submitBtn.textContent = SERVICE_CONFIG[selectedService].submit;
+    setActiveControls();
+    updateRegistrationRombels(registrationRombel.value);
+    showScreen(wizardScreen);
+    if (deferredDraft) applyDeferredDraft();
+    else {
+      currentStep = 0;
+      updateStep();
+      saveDraftImmediately();
+    }
+  } catch (error) {
+    const wrapper = contextAccessCode.closest(".field-block");
+    if (requiresSchoolAccess()) {
+      wrapper.classList.add("has-error");
+      wrapper.querySelector(".field-error").textContent = error.message || String(error);
+    }
+    showToast(error.message || String(error), "error");
+  } finally {
+    startFormBtn.disabled = false;
+    startFormBtn.innerHTML = 'Lanjut mengisi data <span aria-hidden="true">→</span>';
+  }
+}
+
+function requestJsonp(action, parameters) {
+  return new Promise((resolve, reject) => {
+    const callback = `__rmJsonp_${Date.now()}_${Math.random().toString(36).slice(2)}`;
+    const script = document.createElement("script");
+    const timer = window.setTimeout(() => {
+      cleanup();
+      reject(new Error("Pusat data belum menjawab. Periksa internet lalu coba lagi."));
+    }, 30000);
+    const cleanup = () => {
+      window.clearTimeout(timer);
+      delete window[callback];
+      script.remove();
+    };
+    window[callback] = data => {
+      cleanup();
+      resolve(data);
+    };
+    script.onerror = () => {
+      cleanup();
+      reject(new Error("Daftar siswa gagal dimuat. Pastikan deployment Apps Script sudah diperbarui."));
+    };
+    const query = new URLSearchParams({ action, callback, ...parameters });
+    script.src = `${WEB_APP_URL}?${query.toString()}`;
+    document.head.appendChild(script);
+  });
+}
+
+function populatePriorStudentOptions(query = "") {
+  const selectedId = updateStudentSelect.value;
+  const keyword = query.trim().toLocaleUpperCase("id-ID");
+  const matches = priorStudents.filter(student => !keyword || student.name.includes(keyword));
+  updateStudentSelect.replaceChildren();
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = matches.length ? `Pilih salah satu dari ${matches.length} siswa` : "Nama tidak ditemukan";
+  updateStudentSelect.appendChild(blank);
+  matches.forEach(student => {
+    const option = document.createElement("option");
+    option.value = student.id;
+    const lock = student.assignedClass ? ` • sudah ${student.assignedClass}` : "";
+    option.textContent = `${student.name} — ${student.previousClass} — NISN ${student.nisnMask}${lock}`;
+    updateStudentSelect.appendChild(option);
+  });
+  if (matches.some(student => student.id === selectedId)) updateStudentSelect.value = selectedId;
+}
+
+function setKnownFieldValue(id, value) {
+  const field = document.getElementById(id);
+  if (!field || value === undefined || value === null || value === "") return;
+  if (field instanceof HTMLSelectElement && !Array.from(field.options).some(option => option.value === String(value))) return;
+  field.value = String(value);
+}
+
+function selectPriorStudent() {
+  const student = priorStudents.find(item => item.id === updateStudentSelect.value);
+  const status = document.getElementById("selectedStudentStatus");
+  status.className = "";
+  updateStudentSelect.dataset.invalidMessage = "";
+  priorStudentId.value = student?.id || "";
+  document.getElementById("selectedStudentName").textContent = student?.name || "Belum dipilih";
+  document.getElementById("selectedStudentNisn").textContent = student?.nisnMask || "—";
+  document.getElementById("selectedStudentPreviousClass").textContent = student?.previousClass || "—";
+  document.getElementById("selectedStudentSourceYear").textContent = student?.sourceYear || "—";
+
+  if (!student) {
+    setSelectOptions(rombelBaru, [], "Pilih murid terlebih dahulu");
+    status.textContent = "Pilih nama murid untuk melihat status penempatannya.";
+    return;
+  }
+  if (student.needsFullRegistration) {
+    setSelectOptions(rombelBaru, [], "Identitas lama belum lengkap");
+    updateStudentSelect.dataset.invalidMessage = "NISN atau NIK murid ini belum lengkap. Gunakan tombol pendataan lengkap di bawah.";
+    status.className = "error";
+    status.textContent = updateStudentSelect.dataset.invalidMessage;
+    return;
+  }
+
+  const choices = student.assignedClass ? [student.assignedClass] : student.allowedRombels;
+  setSelectOptions(rombelBaru, choices, "Pilih rombel baru");
+  if (student.assignedClass) {
+    rombelBaru.value = student.assignedClass;
+    status.className = "locked";
+    status.textContent = `Murid ini sudah terkunci di ${student.assignedClass}. Data lain masih dapat diperbarui; untuk pindah kelas gunakan permintaan buka rombel.`;
+  } else {
+    status.textContent = `Murid belum ditempatkan. Pilihan rombel dibatasi satu tingkat di atas ${student.previousClass}.`;
+  }
+  document.getElementById("rombelRecommendation").textContent = student.assignedClass
+    ? `Penempatan aktif: ${student.assignedClass}.`
+    : `Rekomendasi berdasarkan rombel sebelumnya: ${student.previousClass}.`;
+
+  const details = student.details || {};
+  [
+    ["hpUpdate", details.hp], ["kodePosUpdate", details.postalCode], ["alamatUpdate", details.address],
+    ["kelurahanUpdate", details.village], ["kecamatanUpdate", details.district], ["transportUpdate", details.transport],
+    ["beratUpdate", details.weight], ["tinggiUpdate", details.height], ["lingkarUpdate", details.headCircumference],
+    ["saudaraUpdate", details.siblings], ["jarakUpdate", details.distance], ["lintangUpdate", details.latitude],
+    ["bujurUpdate", details.longitude], ["pekerjaanAyahUpdate", details.fatherJob],
+    ["penghasilanAyahUpdate", details.fatherIncome], ["pekerjaanIbuUpdate", details.motherJob],
+    ["penghasilanIbuUpdate", details.motherIncome], ["kebutuhanUpdate", details.specialNeeds],
+    ["hobiUpdate", details.hobby], ["citaCitaUpdate", details.aspiration],
+  ].forEach(([id, value]) => setKnownFieldValue(id, value));
+  clearFieldError(updateStudentSelect);
+  scheduleDraftSave();
+}
+
+function switchToFullRegistration() {
+  const secureAccessCode = formAccessCode.value;
+  selectedService = "PMB";
+  currentStep = 0;
+  formService.value = SERVICE_CONFIG.PMB.value;
+  document.getElementById("wizardTitle").textContent = SERVICE_CONFIG.PMB.title;
+  submitBtn.textContent = SERVICE_CONFIG.PMB.submit;
   setActiveControls();
-  showScreen(wizardScreen);
+  registrationCategory.value = "SISWA KELAS 2-6 BELUM TERDATA";
+  updateRegistrationRombels();
+  fullRegistrationAccessCode.value = secureAccessCode;
+  formAccessCode.value = secureAccessCode;
   updateStep();
-  saveDraftImmediately();
+  showToast("Silakan isi data lengkap siswa lama yang belum tersedia di daftar.", "success");
 }
 
 function updateStep() {
@@ -297,6 +561,11 @@ function validateField(field) {
   clearFieldError(field);
   const value = field.type === "checkbox" ? field.checked : field.value.trim();
 
+  if (field.dataset.invalidMessage) {
+    setFieldError(field, field.dataset.invalidMessage);
+    return false;
+  }
+
   if (field.dataset.required === "true" && !value) {
     setFieldError(field, "Lengkapi bagian ini agar dapat melanjutkan.");
     return false;
@@ -334,6 +603,12 @@ function validateField(field) {
 }
 
 function applyConditionalRequirements() {
+  const oldStudent = selectedService === "PMB" && registrationCategory.value === "SISWA KELAS 2-6 BELUM TERDATA";
+  fullRegistrationAccessWrap.classList.toggle("is-hidden", !oldStudent);
+  fullRegistrationAccessCode.disabled = !oldStudent;
+  fullRegistrationAccessCode.dataset.required = oldStudent ? "true" : "false";
+  if (oldStudent) formAccessCode.value = fullRegistrationAccessCode.value.trim().toLocaleUpperCase("id-ID");
+
   const asal = document.getElementById("asalPendidikan");
   const sekolahAsal = document.getElementById("sekolahAsal");
   if (!asal.disabled) sekolahAsal.dataset.required = asal.value === "TK/PAUD" ? "true" : "false";
@@ -371,7 +646,7 @@ function renderReview() {
   reviewContent.replaceChildren();
   const groups = [
     { title: "Layanan", names: ["Tahun Pendaftaran", "Nama Sekolah", "Jenis Layanan"] },
-    { title: "Identitas utama", ids: ["nama", "nisn", "nik", "mutasiMasukNama", "mutasiMasukNisn", "mutasiMasukNik", "mutasiKeluarNama", "mutasiKeluarNisn", "mutasiKeluarNik", "updateNama", "updateNisn", "updateNik"] },
+    { title: "Identitas utama", ids: ["nama", "nisn", "nik", "mutasiMasukNama", "mutasiMasukNisn", "mutasiMasukNik", "mutasiKeluarNama", "mutasiKeluarNisn", "mutasiKeluarNik", "updateStudentSelect", "requestTeacherName"] },
     { title: "Rangkuman data", allRemaining: true },
   ];
   const included = new Set();
@@ -392,7 +667,9 @@ function renderReview() {
     });
 
     candidates.forEach(field => {
-      const value = field.value?.trim();
+      const value = field instanceof HTMLSelectElement
+        ? field.selectedOptions[0]?.textContent?.trim()
+        : field.value?.trim();
       if (!value) return;
       included.add(field);
       const row = document.createElement("div");
@@ -471,6 +748,14 @@ function returnHome() {
   form.reset();
   setupYear();
   contextSchool.value = "";
+  contextAccessCode.value = "";
+  fullRegistrationAccessCode.value = "";
+  contextAccessWrap.classList.add("is-hidden");
+  priorStudents = [];
+  deferredDraft = null;
+  updateSearch.value = "";
+  populatePriorStudentOptions();
+  updateRegistrationRombels();
   mutationChoices.classList.add("is-hidden");
   mainChoices.classList.remove("is-hidden");
   resultModal.classList.remove("show");
@@ -506,7 +791,7 @@ document.getElementById("backToServices").addEventListener("click", () => {
   mainChoices.classList.remove("is-hidden");
 });
 document.getElementById("backFromContext").addEventListener("click", () => showScreen(serviceScreen));
-document.getElementById("startFormBtn").addEventListener("click", startForm);
+startFormBtn.addEventListener("click", startForm);
 document.getElementById("changeServiceBtn").addEventListener("click", confirmDiscardAndReturnHome);
 document.getElementById("brandHome").addEventListener("click", event => { event.preventDefault(); confirmDiscardAndReturnHome(); });
 document.getElementById("finishBtn").addEventListener("click", () => {
@@ -527,6 +812,21 @@ contextSchool.addEventListener("change", () => {
   wrapper.classList.remove("has-error");
   wrapper.querySelector(".field-error").textContent = "";
 });
+contextAccessCode.addEventListener("input", () => {
+  contextAccessCode.value = contextAccessCode.value.toLocaleUpperCase("id-ID");
+  const wrapper = contextAccessCode.closest(".field-block");
+  wrapper.classList.remove("has-error");
+  wrapper.querySelector(".field-error").textContent = "";
+});
+registrationCategory.addEventListener("change", () => updateRegistrationRombels());
+fullRegistrationAccessCode.addEventListener("input", () => {
+  fullRegistrationAccessCode.value = fullRegistrationAccessCode.value.toLocaleUpperCase("id-ID");
+  formAccessCode.value = fullRegistrationAccessCode.value;
+  clearFieldError(fullRegistrationAccessCode);
+});
+updateSearch.addEventListener("input", () => populatePriorStudentOptions(updateSearch.value));
+updateStudentSelect.addEventListener("change", selectPriorStudent);
+document.getElementById("studentNotFoundBtn").addEventListener("click", switchToFullRegistration);
 document.getElementById("asalPendidikan").addEventListener("change", applyConditionalRequirements);
 document.getElementById("penerimaKps").addEventListener("change", applyConditionalRequirements);
 document.getElementById("statusKeluar").addEventListener("change", applyConditionalRequirements);
@@ -609,5 +909,7 @@ window.addEventListener("beforeunload", saveDraftImmediately);
 
 populateOptionLists();
 setupYear();
+populatePriorStudentOptions();
+updateRegistrationRombels();
 applyConditionalRequirements();
 if (!restoreDraft()) showScreen(serviceScreen);

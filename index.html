@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b6b65">
   <meta name="description" content="Layanan terpadu pendaftaran, mutasi, dan pembaruan data murid untuk empat SD Negeri di Maluku Tengah.">
   <title>Registrasi Murid | SD Negeri Maluku Tengah</title>
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2026.07.27-8">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -43,7 +43,7 @@
         <div id="mainChoices" class="choice-stack">
           <button class="service-card service-primary" type="button" data-service-choice="PMB">
             <span class="service-icon" aria-hidden="true">01</span>
-            <span class="service-text"><strong>Pendaftaran Murid Baru</strong><small>Untuk calon murid yang mendaftar sebagai peserta didik baru.</small></span>
+            <span class="service-text"><strong>Pendataan Murid Baru / Belum Terdata</strong><small>Untuk murid baru kelas 1 maupun siswa kelas 2–6 yang belum pernah masuk Dapodik.</small></span>
             <span class="service-arrow" aria-hidden="true">→</span>
           </button>
           <button class="service-card" type="button" id="openMutationChoices">
@@ -54,6 +54,11 @@
           <button class="service-card" type="button" data-service-choice="UPDATE">
             <span class="service-icon" aria-hidden="true">03</span>
             <span class="service-text"><strong>Pembaruan Data Tahunan</strong><small>Untuk memperbarui rombel, ukuran tubuh, alamat, dan data yang berubah.</small></span>
+            <span class="service-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="service-card" type="button" data-service-choice="UNLOCK_REQUEST">
+            <span class="service-icon" aria-hidden="true">04</span>
+            <span class="service-text"><strong>Ajukan Perubahan Rombel</strong><small>Meminta persetujuan operator jika pembagian kelas yang sudah terkunci perlu diulang.</small></span>
             <span class="service-arrow" aria-hidden="true">→</span>
           </button>
         </div>
@@ -96,6 +101,12 @@
             </select>
             <span class="field-error" aria-live="polite"></span>
           </div>
+          <div class="field-block span-two is-hidden" id="contextAccessWrap">
+            <label for="contextAccessCode">Kode akses sekolah</label>
+            <input id="contextAccessCode" type="password" autocomplete="off" placeholder="Minta kode kepada operator sekolah">
+            <small>Kode ini membatasi daftar nama siswa agar hanya dapat dibuka oleh sekolah terkait.</small>
+            <span class="field-error" aria-live="polite"></span>
+          </div>
         </div>
 
         <button type="button" class="btn btn-primary btn-wide" id="startFormBtn">Lanjut mengisi data <span aria-hidden="true">→</span></button>
@@ -125,12 +136,30 @@
           <input type="hidden" name="Tahun Pendaftaran" id="formYear">
           <input type="hidden" name="Nama Sekolah" id="formSchool">
           <input type="hidden" name="Jenis Layanan" id="formService">
+          <input type="hidden" name="Kode Akses Sekolah" id="formAccessCode">
           <input type="hidden" name="Request Token" id="requestToken">
-          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU">
+          <input type="hidden" name="Versi Form" value="2026.07.27-8">
+          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU 2026.07.27-8">
 
           <section class="form-step" data-services="PMB" data-title="Identitas Murid">
             <div class="step-heading"><span>01</span><div><h2>Identitas murid</h2><p>Isi persis seperti dokumen resmi.</p></div></div>
             <div class="form-grid two">
+              <div class="field-block span-two">
+                <label for="registrationCategory">Kategori pendataan</label>
+                <select id="registrationCategory" name="Kategori Pendataan" data-required="true">
+                  <option value="">Pilih kondisi murid</option>
+                  <option value="MURID BARU KELAS 1">Murid baru kelas 1</option>
+                  <option value="SISWA KELAS 2-6 BELUM TERDATA">Siswa kelas 2–6 yang belum terdata di Dapodik</option>
+                </select>
+                <small>Gunakan pilihan kedua untuk siswa lama yang belum pernah dimasukkan ke Dapodik.</small>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
+              <div class="field-block span-two is-hidden" id="fullRegistrationAccessWrap">
+                <label for="fullRegistrationAccessCode">Kode akses sekolah</label>
+                <input id="fullRegistrationAccessCode" type="password" autocomplete="off" placeholder="Minta kode kepada operator sekolah">
+                <small>Khusus pendataan lengkap siswa kelas 2–6 yang belum masuk Dapodik.</small>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
               <div class="field-block span-two">
                 <label for="nama">Nama lengkap murid</label>
                 <input id="nama" name="Nama" class="uppercase" type="text" autocomplete="name" data-required="true" placeholder="Contoh: AISYAH NUR HALIZA">
@@ -277,7 +306,7 @@
           <section class="form-step" data-services="PMB" data-title="Dokumen">
             <div class="step-heading"><span>05</span><div><h2>Dokumen dan riwayat sekolah</h2><p>Isi nomor dokumen yang tersedia.</p></div></div>
             <div class="form-grid two">
-              <div class="field-block"><label for="rombel">Rombel saat ini</label><input id="rombel" name="Rombel Saat Ini" type="text" placeholder="Jika ada"></div>
+              <div class="field-block"><label for="rombel">Rombel saat ini</label><select id="rombel" name="Rombel Saat Ini" data-required="true"></select><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block"><label for="noUjian">Nomor peserta ujian nasional</label><input id="noUjian" name="No Peserta Ujian Nasional" type="text" placeholder="Disarankan jika ada"></div>
               <div class="field-block"><label for="noIjazah">Nomor seri ijazah</label><input id="noIjazah" name="No Seri Ijazah" type="text" placeholder="Disarankan jika ada"></div>
               <div class="field-block"><label for="noAkta">Nomor registrasi akta lahir</label><input id="noAkta" name="No Registrasi Akta Lahir" class="uppercase" type="text" data-required="true" placeholder="8101-LT-30042018-0060"><span class="field-error" aria-live="polite"></span></div>
@@ -339,18 +368,26 @@
           </section>
 
           <section class="form-step" data-services="UPDATE" data-title="Identitas Murid">
-            <div class="step-heading"><span>01</span><div><h2>Temukan data murid</h2><p>Gunakan identitas yang sudah terdaftar.</p></div></div>
+            <div class="step-heading"><span>01</span><div><h2>Pilih murid tahun sebelumnya</h2><p>Cari nama murid dari daftar sekolah. NISN dan NIK tidak perlu diketik ulang.</p></div></div>
             <div class="form-grid two">
-              <div class="field-block span-two"><label for="updateNama">Nama lengkap murid</label><input id="updateNama" name="Nama Pembaruan" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
-              <div class="field-block"><label for="updateNisn">NISN murid</label><input id="updateNisn" name="NISN Pembaruan" class="digits" type="text" inputmode="numeric" maxlength="10" data-length="10" data-required="true"><span class="field-error" aria-live="polite"></span></div>
-              <div class="field-block"><label for="updateNik">NIK murid</label><input id="updateNik" name="NIK Pembaruan" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="updateSearch">Cari nama murid</label><input id="updateSearch" type="search" placeholder="Ketik beberapa huruf nama murid"></div>
+              <div class="field-block span-two"><label for="updateStudentSelect">Nama murid</label><select id="updateStudentSelect" name="Nama Murid Terpilih" data-required="true"><option value="">Daftar siswa sedang disiapkan…</option></select><span class="field-error" aria-live="polite"></span></div>
+              <input id="priorStudentId" name="ID Siswa Lama" type="hidden">
+              <div class="student-selection-card span-two" id="selectedStudentCard" aria-live="polite">
+                <div><span>Nama</span><strong id="selectedStudentName">Belum dipilih</strong></div>
+                <div><span>NISN</span><strong id="selectedStudentNisn">—</strong></div>
+                <div><span>Rombel sebelumnya</span><strong id="selectedStudentPreviousClass">—</strong></div>
+                <div><span>Tahun sumber</span><strong id="selectedStudentSourceYear">—</strong></div>
+                <p id="selectedStudentStatus">Pilih nama murid untuk melihat status penempatannya.</p>
+              </div>
+              <div class="span-two"><button type="button" class="btn btn-secondary btn-wide" id="studentNotFoundBtn">Nama siswa tidak ada di daftar / belum terdata Dapodik</button></div>
             </div>
           </section>
 
           <section class="form-step" data-services="UPDATE" data-title="Data Terbaru">
             <div class="step-heading"><span>02</span><div><h2>Data terbaru</h2><p>Isi kondisi murid pada tahun ini.</p></div></div>
             <div class="form-grid four">
-              <div class="field-block span-two"><label for="rombelBaru">Rombel baru</label><select id="rombelBaru" name="Rombel Baru" data-required="true" data-options="rombel"></select><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="rombelBaru">Rombel baru</label><select id="rombelBaru" name="Rombel Baru" data-required="true"><option value="">Pilih murid terlebih dahulu</option></select><small id="rombelRecommendation">Pilihan kelas akan disesuaikan dengan rombel tahun sebelumnya.</small><span class="field-error" aria-live="polite"></span></div>
               <div class="field-block"><label for="hobiUpdate">Hobi terbaru</label><select id="hobiUpdate" name="Hobi Pembaruan" data-options="hobby"></select></div>
               <div class="field-block"><label for="citaCitaUpdate">Cita-cita terbaru</label><select id="citaCitaUpdate" name="Cita-Cita Pembaruan" data-options="aspiration"></select></div>
               <div class="field-block"><label for="hpUpdate">HP orang tua / wali</label><input id="hpUpdate" name="HP Pembaruan" class="phone" type="tel" inputmode="tel" data-required="true" placeholder="08… atau +62…"><span class="field-error" aria-live="polite"></span></div>
@@ -375,7 +412,19 @@
             </div>
           </section>
 
-          <section class="form-step review-step" data-services="PMB,MUTASI_MASUK,MUTASI_KELUAR,UPDATE" data-title="Periksa & Kirim">
+          <section class="form-step" data-services="UNLOCK_REQUEST" data-title="Permintaan Operator">
+            <div class="step-heading"><span>01</span><div><h2>Minta buka ulang pembagian rombel</h2><p>Gunakan setelah wali kelas terkait berdiskusi dan menyepakati perlunya pembagian ulang.</p></div></div>
+            <div class="measure-note"><strong>Perlu persetujuan operator.</strong><span>Penempatan yang sudah tercatat tidak akan dibuka sebelum operator menyetujui permintaan ini.</span></div>
+            <div class="form-grid two">
+              <div class="field-block span-two"><label for="requestTeacherName">Nama guru pemohon</label><input id="requestTeacherName" name="Nama Guru Pemohon" class="uppercase" type="text" data-required="true"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block span-two"><label for="requestTeacherPhone">HP guru pemohon</label><input id="requestTeacherPhone" name="HP Guru Pemohon" class="phone" type="tel" inputmode="tel" data-required="true" placeholder="08… atau +62…"><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="requestMainClass">Rombel utama yang dibuka</label><select id="requestMainClass" name="Rombel Utama Permintaan" data-required="true" data-options="rombel"></select><span class="field-error" aria-live="polite"></span></div>
+              <div class="field-block"><label for="requestPairClass">Rombel pasangan</label><select id="requestPairClass" name="Rombel Pasangan Permintaan" data-options="rombel"></select><small>Isi jika pembagian ulang melibatkan dua rombel, misalnya 3-A dan 3-B.</small></div>
+              <div class="field-block span-two"><label for="requestReason">Alasan pembagian ulang</label><textarea id="requestReason" name="Alasan Permintaan" class="propercase" rows="4" data-required="true" placeholder="Jelaskan singkat alasan dan hasil diskusi wali kelas."></textarea><span class="field-error" aria-live="polite"></span></div>
+            </div>
+          </section>
+
+          <section class="form-step review-step" data-services="PMB,MUTASI_MASUK,MUTASI_KELUAR,UPDATE,UNLOCK_REQUEST" data-title="Periksa & Kirim">
             <div class="step-heading"><span>✓</span><div><h2>Periksa sebelum dikirim</h2><p>Pastikan sekolah dan identitas murid sudah benar.</p></div></div>
             <div id="reviewContent" class="review-content"></div>
             <label class="confirm-line"><input id="confirmation" type="checkbox" data-required="true"><span>Saya menyatakan data yang diisi sesuai dokumen dan keadaan sebenarnya.</span></label>
@@ -404,6 +453,6 @@
     </div>
   </div>
 
-  <script src="script.js"></script>
+  <script src="script.js?v=2026.07.27-8"></script>
 </body>
 </html>
