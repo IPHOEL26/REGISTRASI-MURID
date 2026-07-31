@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b6b65">
   <meta name="description" content="Layanan terpadu pendaftaran, mutasi, dan pembaruan data murid untuk empat SD Negeri di Maluku Tengah.">
   <title>Registrasi Murid | SD Negeri Maluku Tengah</title>
-  <link rel="stylesheet" href="style.css?v=2026.07.27-8">
+  <link rel="stylesheet" href="style.css?v=2026.07.30-9">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -138,8 +138,8 @@
           <input type="hidden" name="Jenis Layanan" id="formService">
           <input type="hidden" name="Kode Akses Sekolah" id="formAccessCode">
           <input type="hidden" name="Request Token" id="requestToken">
-          <input type="hidden" name="Versi Form" value="2026.07.27-8">
-          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU 2026.07.27-8">
+          <input type="hidden" name="Versi Form" value="2026.07.30-9">
+          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU 2026.07.30-9">
 
           <section class="form-step" data-services="PMB" data-title="Identitas Murid">
             <div class="step-heading"><span>01</span><div><h2>Identitas murid</h2><p>Isi persis seperti dokumen resmi.</p></div></div>
@@ -170,9 +170,20 @@
                 <select id="jk" name="JK" data-required="true"><option value="">Pilih</option><option value="L">Laki-laki</option><option value="P">Perempuan</option></select>
                 <span class="field-error" aria-live="polite"></span>
               </div>
+              <div class="field-block is-hidden" id="nisnStatusWrap">
+                <label for="nisnStatus">Status NISN</label>
+                <select id="nisnStatus" name="Status NISN">
+                  <option value="">Pilih status NISN</option>
+                  <option value="SUDAH MEMILIKI NISN">Sudah memiliki NISN</option>
+                  <option value="BELUM MEMILIKI NISN">Belum memiliki NISN</option>
+                </select>
+                <small>Pilih “Belum memiliki NISN” jika NISN belum diterbitkan. Jangan mengisi angka nol.</small>
+                <span class="field-error" aria-live="polite"></span>
+              </div>
               <div class="field-block">
                 <label for="nisn">NISN</label>
                 <input id="nisn" name="NISN" class="digits" type="text" inputmode="numeric" maxlength="10" data-length="10" data-required="true" placeholder="10 digit NISN">
+                <small id="nisnHelp">Masukkan 10 digit NISN yang sudah resmi terbit.</small>
                 <span class="field-error" aria-live="polite"></span>
               </div>
               <div class="field-block">
@@ -453,6 +464,6 @@
     </div>
   </div>
 
-  <script src="script.js?v=2026.07.27-8"></script>
+  <script src="script.js?v=2026.07.30-9"></script>
 </body>
 </html>
