@@ -1,7 +1,7 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwPEtSmPfF6t-_atSrevfmSnie139fQXjNMcMG7pWmHYj4rFciuaXLTDtA_PWGHaRjO/exec";
 const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V4";
-const FRONTEND_VERSION = "2026.07.27-8";
+const FRONTEND_VERSION = "2026.07.30-9";
 
 const SERVICE_CONFIG = {
   PMB: { title: "Pendataan Murid Baru / Belum Terdata", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendataan lengkap" },
@@ -94,6 +94,10 @@ const registrationCategory = document.getElementById("registrationCategory");
 const registrationRombel = document.getElementById("rombel");
 const fullRegistrationAccessWrap = document.getElementById("fullRegistrationAccessWrap");
 const fullRegistrationAccessCode = document.getElementById("fullRegistrationAccessCode");
+const nisnStatusWrap = document.getElementById("nisnStatusWrap");
+const nisnStatus = document.getElementById("nisnStatus");
+const nisnInput = document.getElementById("nisn");
+const nisnHelp = document.getElementById("nisnHelp");
 const updateSearch = document.getElementById("updateSearch");
 const updateStudentSelect = document.getElementById("updateStudentSelect");
 const priorStudentId = document.getElementById("priorStudentId");
@@ -150,6 +154,45 @@ function updateRegistrationRombels(preferredValue = "") {
     clearFieldError(fullRegistrationAccessCode);
   }
   if (preferredValue && values.includes(preferredValue)) registrationRombel.value = preferredValue;
+  updateRegistrationNisnState();
+}
+
+function updateRegistrationNisnState() {
+  const isPmb = selectedService === "PMB";
+  const category = registrationCategory.value;
+  const upperGrade = isPmb && category === "SISWA KELAS 2-6 BELUM TERDATA";
+  const newGradeOne = isPmb && category === "MURID BARU KELAS 1";
+
+  nisnStatusWrap.classList.toggle("is-hidden", !upperGrade);
+  nisnStatus.disabled = !upperGrade;
+  nisnStatus.dataset.required = upperGrade ? "true" : "false";
+
+  if (!upperGrade) {
+    nisnStatus.value = "";
+    nisnInput.disabled = !newGradeOne;
+    nisnInput.dataset.required = newGradeOne ? "true" : "false";
+    nisnInput.placeholder = "10 digit NISN";
+    nisnHelp.textContent = newGradeOne
+      ? "Masukkan 10 digit NISN yang sudah resmi terbit."
+      : "Pilih kategori pendataan terlebih dahulu.";
+    clearFieldError(nisnStatus);
+    return;
+  }
+
+  const hasNisn = nisnStatus.value === "SUDAH MEMILIKI NISN";
+  const noNisnYet = nisnStatus.value === "BELUM MEMILIKI NISN";
+  nisnInput.disabled = !hasNisn;
+  nisnInput.dataset.required = hasNisn ? "true" : "false";
+  nisnInput.placeholder = hasNisn ? "10 digit NISN" : "Tidak perlu diisi";
+  nisnHelp.textContent = hasNisn
+    ? "Masukkan 10 digit NISN yang sudah resmi terbit."
+    : noNisnYet
+      ? "NISN belum terbit. Sistem akan memakai NIK 16 digit sebagai identitas sementara."
+      : "Pilih status NISN terlebih dahulu.";
+  if (noNisnYet) {
+    nisnInput.value = "";
+    clearFieldError(nisnInput);
+  }
 }
 
 function requiresSchoolAccess(service = selectedService) {
@@ -244,6 +287,12 @@ function applyDeferredDraft() {
     if (field.type === "checkbox") field.checked = id === "confirmation" ? false : Boolean(value);
     else field.value = value;
   });
+  if (selectedService === "PMB" && registrationCategory.value === "SISWA KELAS 2-6 BELUM TERDATA" && !nisnStatus.value) {
+    nisnStatus.value = !nisnInput.value || /^0+$/.test(nisnInput.value)
+      ? "BELUM MEMILIKI NISN"
+      : "SUDAH MEMILIKI NISN";
+  }
+  updateRegistrationNisnState();
   pendingToken = draft.pendingToken || "";
   requestToken.value = pendingToken;
   applyConditionalRequirements();
@@ -576,6 +625,10 @@ function validateField(field) {
     setFieldError(field, `Masukkan tepat ${field.dataset.length} digit.`);
     return false;
   }
+  if (field.id === "nisn" && /^0+$/.test(String(value))) {
+    setFieldError(field, "NISN tidak boleh diisi angka nol semua. Jika belum terbit, pilih Belum memiliki NISN.");
+    return false;
+  }
   if (field.classList.contains("date-id") && !isValidDateId(value)) {
     setFieldError(field, "Gunakan tanggal yang benar dengan format dd-mm-yyyy.");
     return false;
@@ -608,6 +661,7 @@ function applyConditionalRequirements() {
   fullRegistrationAccessCode.disabled = !oldStudent;
   fullRegistrationAccessCode.dataset.required = oldStudent ? "true" : "false";
   if (oldStudent) formAccessCode.value = fullRegistrationAccessCode.value.trim().toLocaleUpperCase("id-ID");
+  updateRegistrationNisnState();
 
   const asal = document.getElementById("asalPendidikan");
   const sekolahAsal = document.getElementById("sekolahAsal");
@@ -646,7 +700,7 @@ function renderReview() {
   reviewContent.replaceChildren();
   const groups = [
     { title: "Layanan", names: ["Tahun Pendaftaran", "Nama Sekolah", "Jenis Layanan"] },
-    { title: "Identitas utama", ids: ["nama", "nisn", "nik", "mutasiMasukNama", "mutasiMasukNisn", "mutasiMasukNik", "mutasiKeluarNama", "mutasiKeluarNisn", "mutasiKeluarNik", "updateStudentSelect", "requestTeacherName"] },
+    { title: "Identitas utama", ids: ["nama", "nisnStatus", "nisn", "nik", "mutasiMasukNama", "mutasiMasukNisn", "mutasiMasukNik", "mutasiKeluarNama", "mutasiKeluarNisn", "mutasiKeluarNik", "updateStudentSelect", "requestTeacherName"] },
     { title: "Rangkuman data", allRemaining: true },
   ];
   const included = new Set();
@@ -819,6 +873,11 @@ contextAccessCode.addEventListener("input", () => {
   wrapper.querySelector(".field-error").textContent = "";
 });
 registrationCategory.addEventListener("change", () => updateRegistrationRombels());
+nisnStatus.addEventListener("change", () => {
+  updateRegistrationNisnState();
+  clearFieldError(nisnStatus);
+  scheduleDraftSave();
+});
 fullRegistrationAccessCode.addEventListener("input", () => {
   fullRegistrationAccessCode.value = fullRegistrationAccessCode.value.toLocaleUpperCase("id-ID");
   formAccessCode.value = fullRegistrationAccessCode.value;
