@@ -1,7 +1,8 @@
 // Tempel URL deployment Web App dari Code.gs di bawah ini.
 const WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwPEtSmPfF6t-_atSrevfmSnie139fQXjNMcMG7pWmHYj4rFciuaXLTDtA_PWGHaRjO/exec";
 const DRAFT_STORAGE_KEY = "REGISTRASI_MURID_DRAFT_V4";
-const FRONTEND_VERSION = "2026.07.30-9";
+const FRONTEND_VERSION = "2026.08.11-10";
+const OPERATOR_SESSION_KEY = "REGISTRASI_OPERATOR_SESSION_V1";
 
 const SERVICE_CONFIG = {
   PMB: { title: "Pendataan Murid Baru / Belum Terdata", value: "PENDAFTARAN MURID BARU", submit: "Kirim pendataan lengkap" },
@@ -62,6 +63,7 @@ const OPTIONS = {
 const serviceScreen = document.getElementById("serviceScreen");
 const contextScreen = document.getElementById("contextScreen");
 const wizardScreen = document.getElementById("wizardScreen");
+const operatorScreen = document.getElementById("operatorScreen");
 const mainChoices = document.getElementById("mainChoices");
 const mutationChoices = document.getElementById("mutationChoices");
 const form = document.getElementById("registrationForm");
@@ -102,6 +104,25 @@ const updateSearch = document.getElementById("updateSearch");
 const updateStudentSelect = document.getElementById("updateStudentSelect");
 const priorStudentId = document.getElementById("priorStudentId");
 const rombelBaru = document.getElementById("rombelBaru");
+const operatorLoginPanel = document.getElementById("operatorLoginPanel");
+const operatorDashboard = document.getElementById("operatorDashboard");
+const operatorPin = document.getElementById("operatorPin");
+const operatorLoginBtn = document.getElementById("operatorLoginBtn");
+const operatorLoginError = document.getElementById("operatorLoginError");
+const operatorSchoolFilter = document.getElementById("operatorSchoolFilter");
+const operatorServiceFilter = document.getElementById("operatorServiceFilter");
+const operatorStatusFilter = document.getElementById("operatorStatusFilter");
+const operatorSearch = document.getElementById("operatorSearch");
+const operatorList = document.getElementById("operatorList");
+const operatorListMeta = document.getElementById("operatorListMeta");
+const operatorDetailModal = document.getElementById("operatorDetailModal");
+const operatorDetailFields = document.getElementById("operatorDetailFields");
+const operatorDetailTitle = document.getElementById("operatorDetailTitle");
+const operatorNote = document.getElementById("operatorNote");
+const operatorDeleteConfirm = document.getElementById("operatorDeleteConfirm");
+const operatorActionError = document.getElementById("operatorActionError");
+const operatorNormalActions = document.getElementById("operatorNormalActions");
+const operatorRombelActions = document.getElementById("operatorRombelActions");
 
 let selectedService = "PMB";
 let currentStep = 0;
@@ -113,6 +134,10 @@ let lastSubmissionSucceeded = false;
 let isRestoringDraft = false;
 let deferredDraft = null;
 let priorStudents = [];
+let operatorSession = sessionStorage.getItem(OPERATOR_SESSION_KEY) || "";
+let operatorCurrentItem = null;
+let operatorSearchTimer = null;
+const operatorRequests = new Map();
 
 function populateOptionLists() {
   document.querySelectorAll("select[data-options]").forEach(select => {
@@ -205,7 +230,7 @@ function setupYear() {
 }
 
 function showScreen(screen) {
-  [serviceScreen, contextScreen, wizardScreen].forEach(item => item.classList.toggle("is-hidden", item !== screen));
+  [serviceScreen, contextScreen, wizardScreen, operatorScreen].forEach(item => item.classList.toggle("is-hidden", item !== screen));
   window.scrollTo({ top: 0, behavior: "smooth" });
 }
 
@@ -833,6 +858,324 @@ function confirmDiscardAndReturnHome() {
   returnHome();
 }
 
+function openOperatorRoom() {
+  showScreen(operatorScreen);
+  operatorLoginError.textContent = "";
+  if (operatorSession) {
+    showOperatorDashboard(true);
+    loadOperatorList();
+  } else {
+    showOperatorDashboard(false);
+    window.setTimeout(() => operatorPin.focus(), 80);
+  }
+}
+
+function showOperatorDashboard(loggedIn) {
+  operatorLoginPanel.classList.toggle("is-hidden", loggedIn);
+  operatorDashboard.classList.toggle("is-hidden", !loggedIn);
+}
+
+function makeOperatorRequestToken() {
+  return `OP-${Date.now()}-${Math.random().toString(36).slice(2, 12)}`;
+}
+
+function requestOperatorAction(action, payload = {}) {
+  return new Promise((resolve, reject) => {
+    const token = makeOperatorRequestToken();
+    const requestForm = document.createElement("form");
+    requestForm.method = "post";
+    requestForm.action = WEB_APP_URL;
+    requestForm.target = "operatorFrame";
+    requestForm.style.display = "none";
+    const values = {
+      "Operator Action": action,
+      "Operator Session": operatorSession,
+      "Request Token": token,
+      ...payload,
+    };
+    Object.entries(values).forEach(([name, value]) => {
+      const input = document.createElement("input");
+      input.type = "hidden";
+      input.name = name;
+      input.value = value == null ? "" : String(value);
+      requestForm.appendChild(input);
+    });
+    const timer = window.setTimeout(() => {
+      operatorRequests.delete(token);
+      requestForm.remove();
+      reject(new Error("Pusat data belum menjawab. Periksa internet lalu coba lagi."));
+    }, 45000);
+    operatorRequests.set(token, { resolve, reject, timer });
+    document.body.appendChild(requestForm);
+    HTMLFormElement.prototype.submit.call(requestForm);
+    window.setTimeout(() => requestForm.remove(), 2000);
+  });
+}
+
+async function loginOperator() {
+  const pin = operatorPin.value.replace(/\D/g, "");
+  operatorPin.value = pin;
+  operatorLoginError.textContent = "";
+  if (!/^\d{6,12}$/.test(pin)) {
+    operatorLoginError.textContent = "PIN harus terdiri dari 6 sampai 12 angka.";
+    operatorPin.focus();
+    return;
+  }
+  operatorLoginBtn.disabled = true;
+  operatorLoginBtn.textContent = "Memeriksa PIN...";
+  try {
+    const data = await requestOperatorAction("login", { "Operator PIN": pin });
+    operatorSession = data.sessionToken || "";
+    if (!operatorSession) throw new Error("Server tidak mengirim sesi operator.");
+    sessionStorage.setItem(OPERATOR_SESSION_KEY, operatorSession);
+    operatorPin.value = "";
+    showOperatorDashboard(true);
+    showToast("Ruang Operator berhasil dibuka.", "success");
+    await loadOperatorList();
+  } catch (error) {
+    operatorLoginError.textContent = error.message || String(error);
+  } finally {
+    operatorLoginBtn.disabled = false;
+    operatorLoginBtn.textContent = "Buka Ruang Operator";
+  }
+}
+
+function resetOperatorSession(message = "") {
+  operatorSession = "";
+  operatorCurrentItem = null;
+  sessionStorage.removeItem(OPERATOR_SESSION_KEY);
+  showOperatorDashboard(false);
+  closeOperatorDetail();
+  if (message) operatorLoginError.textContent = message;
+}
+
+async function logoutOperator() {
+  try {
+    if (operatorSession) await requestOperatorAction("logout");
+  } catch (error) {
+    // Sesi lokal tetap ditutup walaupun server tidak menjawab.
+  }
+  resetOperatorSession();
+  showToast("Ruang Operator telah ditutup.", "success");
+}
+
+function setFilterOptions(select, values, blankLabel) {
+  const current = select.value;
+  select.replaceChildren();
+  const blank = document.createElement("option");
+  blank.value = "";
+  blank.textContent = blankLabel;
+  select.appendChild(blank);
+  values.forEach(value => {
+    const option = document.createElement("option");
+    option.value = value;
+    option.textContent = value;
+    select.appendChild(option);
+  });
+  if (values.includes(current)) select.value = current;
+}
+
+async function loadOperatorList() {
+  if (!operatorSession) return;
+  operatorList.replaceChildren();
+  const loading = document.createElement("div");
+  loading.className = "operator-empty";
+  loading.textContent = "Memuat antrean dan memeriksa NIS/NIPD...";
+  operatorList.appendChild(loading);
+  document.getElementById("operatorRefreshBtn").disabled = true;
+  try {
+    const data = await requestOperatorAction("list", {
+      "Filter Sekolah": operatorSchoolFilter.value,
+      "Filter Layanan": operatorServiceFilter.value,
+      "Filter Status": operatorStatusFilter.value,
+      "Cari": operatorSearch.value.trim(),
+    });
+    setFilterOptions(operatorSchoolFilter, data.filters?.schools || [], "Semua sekolah");
+    setFilterOptions(operatorServiceFilter, data.filters?.services || [], "Semua layanan");
+    renderOperatorStats(data.stats || {});
+    renderOperatorItems(data.items || [], data.totalMatching || 0, Boolean(data.truncated));
+  } catch (error) {
+    if (/sesi ruang operator/i.test(error.message || "")) {
+      resetOperatorSession(error.message);
+      return;
+    }
+    operatorList.replaceChildren();
+    const failed = document.createElement("div");
+    failed.className = "operator-empty error";
+    failed.textContent = error.message || String(error);
+    operatorList.appendChild(failed);
+  } finally {
+    document.getElementById("operatorRefreshBtn").disabled = false;
+  }
+}
+
+function renderOperatorStats(stats) {
+  document.getElementById("operatorPendingCount").textContent = stats.pending || 0;
+  document.getElementById("operatorVerifiedCount").textContent = stats.verified || 0;
+  document.getElementById("operatorTotalCount").textContent = stats.total || 0;
+  document.getElementById("operatorNipdCount").textContent = stats.newNipdAssigned || 0;
+  const warning = document.getElementById("operatorNipdWarning");
+  const duplicateCount = Number(stats.duplicateNipd || 0);
+  warning.classList.toggle("is-hidden", !duplicateCount);
+  warning.textContent = duplicateCount
+    ? `${duplicateCount} NIS/NIPD lama terdeteksi ganda pada DATA_MURID. Nomor lama tidak diubah otomatis; periksa sebelum input ke Dapodik.`
+    : "";
+  const schoolStats = document.getElementById("operatorSchoolStats");
+  schoolStats.replaceChildren();
+  (stats.schoolCounts || []).forEach(item => {
+    const pill = document.createElement("span");
+    pill.textContent = `${item.school.replace("SD NEGERI ", "SDN ")}: ${item.pending} belum selesai`;
+    schoolStats.appendChild(pill);
+  });
+}
+
+function maskOperatorIdentifier(value) {
+  const text = String(value || "");
+  return text ? `••••${text.slice(-4)}` : "—";
+}
+
+function renderOperatorItems(items, totalMatching, truncated) {
+  operatorList.replaceChildren();
+  operatorListMeta.textContent = `${totalMatching} data${truncated ? " • menampilkan 250 teratas" : ""}`;
+  if (!items.length) {
+    const empty = document.createElement("div");
+    empty.className = "operator-empty";
+    empty.innerHTML = "<strong>Tidak ada data pada pilihan ini.</strong><span>Ubah filter atau muat ulang antrean.</span>";
+    operatorList.appendChild(empty);
+    return;
+  }
+  items.forEach(item => {
+    const card = document.createElement("button");
+    card.type = "button";
+    card.className = "operator-item";
+    const top = document.createElement("div");
+    top.className = "operator-item-top";
+    const service = document.createElement("span");
+    service.className = "operator-service-chip";
+    service.textContent = item.service;
+    const status = document.createElement("span");
+    status.className = `operator-status-chip ${item.normalizedStatus === "SELESAI" ? "done" : "pending"}`;
+    status.textContent = item.status;
+    top.append(service, status);
+    const name = document.createElement("h3");
+    name.textContent = item.name || "Tanpa nama";
+    const meta = document.createElement("p");
+    meta.textContent = `${item.school} • ${item.year || "—"} • ${item.rombel || "Rombel belum diisi"}`;
+    const identifiers = document.createElement("div");
+    identifiers.className = "operator-identifiers";
+    [
+      ["NIS/NIPD", item.nipd || "Belum dibuat"],
+      ["NISN", maskOperatorIdentifier(item.nisn)],
+      ["NIK", maskOperatorIdentifier(item.nik)],
+    ].forEach(([labelText, valueText]) => {
+      const block = document.createElement("span");
+      const value = document.createElement("strong");
+      block.append(document.createTextNode(`${labelText} `));
+      value.textContent = valueText;
+      block.appendChild(value);
+      identifiers.appendChild(block);
+    });
+    if (item.summary) {
+      const summary = document.createElement("small");
+      summary.textContent = item.summary;
+      card.append(top, name, meta, identifiers, summary);
+    } else {
+      card.append(top, name, meta, identifiers);
+    }
+    card.addEventListener("click", () => openOperatorDetail(item));
+    operatorList.appendChild(card);
+  });
+}
+
+async function openOperatorDetail(item) {
+  operatorCurrentItem = item;
+  operatorActionError.textContent = "";
+  operatorDeleteConfirm.value = "";
+  operatorNote.value = item.note || "";
+  operatorDetailTitle.textContent = item.name || item.service;
+  operatorDetailFields.replaceChildren();
+  const loading = document.createElement("div");
+  loading.className = "operator-empty";
+  loading.textContent = "Memuat detail lengkap...";
+  operatorDetailFields.appendChild(loading);
+  operatorNormalActions.classList.toggle("is-hidden", item.isRombelRequest);
+  operatorRombelActions.classList.toggle("is-hidden", !item.isRombelRequest);
+  operatorDetailModal.classList.add("show");
+  operatorDetailModal.setAttribute("aria-hidden", "false");
+  try {
+    const data = await requestOperatorAction("detail", { "Item Token": item.itemToken });
+    operatorDetailFields.replaceChildren();
+    (data.fields || []).forEach(field => {
+      const row = document.createElement("div");
+      const label = document.createElement("span");
+      const value = document.createElement("strong");
+      label.textContent = field.label;
+      value.textContent = field.value;
+      row.append(label, value);
+      operatorDetailFields.appendChild(row);
+    });
+  } catch (error) {
+    operatorActionError.textContent = error.message || String(error);
+  }
+}
+
+function closeOperatorDetail() {
+  operatorCurrentItem = null;
+  operatorDetailModal.classList.remove("show");
+  operatorDetailModal.setAttribute("aria-hidden", "true");
+  operatorActionError.textContent = "";
+}
+
+function setOperatorActionBusy(busy) {
+  operatorDetailModal.querySelectorAll("button").forEach(button => { button.disabled = busy; });
+}
+
+async function performOperatorAction(action) {
+  if (!operatorCurrentItem) return;
+  operatorActionError.textContent = "";
+  setOperatorActionBusy(true);
+  try {
+    const payload = {
+      "Item Token": operatorCurrentItem.itemToken,
+      "Catatan Operator": operatorNote.value.trim(),
+    };
+    if (action === "verify_delete") payload["Konfirmasi Hapus"] = operatorDeleteConfirm.value.trim();
+    const data = await requestOperatorAction(action, payload);
+    closeOperatorDetail();
+    showToast(data.message || "Tindakan operator berhasil.", "success");
+    await loadOperatorList();
+  } catch (error) {
+    operatorActionError.textContent = error.message || String(error);
+  } finally {
+    setOperatorActionBusy(false);
+  }
+}
+
+document.getElementById("openOperatorRoom").addEventListener("click", openOperatorRoom);
+document.getElementById("backFromOperator").addEventListener("click", () => showScreen(serviceScreen));
+operatorLoginBtn.addEventListener("click", loginOperator);
+operatorPin.addEventListener("input", () => {
+  operatorPin.value = operatorPin.value.replace(/\D/g, "");
+  operatorLoginError.textContent = "";
+});
+operatorPin.addEventListener("keydown", event => { if (event.key === "Enter") loginOperator(); });
+document.getElementById("operatorRefreshBtn").addEventListener("click", loadOperatorList);
+document.getElementById("operatorLogoutBtn").addEventListener("click", logoutOperator);
+operatorSchoolFilter.addEventListener("change", loadOperatorList);
+operatorServiceFilter.addEventListener("change", loadOperatorList);
+operatorStatusFilter.addEventListener("change", loadOperatorList);
+operatorSearch.addEventListener("input", () => {
+  window.clearTimeout(operatorSearchTimer);
+  operatorSearchTimer = window.setTimeout(loadOperatorList, 420);
+});
+document.getElementById("operatorDetailClose").addEventListener("click", closeOperatorDetail);
+operatorDetailModal.addEventListener("click", event => { if (event.target === operatorDetailModal) closeOperatorDetail(); });
+document.getElementById("operatorSaveNoteBtn").addEventListener("click", () => performOperatorAction("save_note"));
+document.getElementById("operatorVerifyKeepBtn").addEventListener("click", () => performOperatorAction("verify_keep"));
+document.getElementById("operatorVerifyDeleteBtn").addEventListener("click", () => performOperatorAction("verify_delete"));
+document.getElementById("operatorApproveRombelBtn").addEventListener("click", () => performOperatorAction("approve_rombel"));
+document.getElementById("operatorRejectRombelBtn").addEventListener("click", () => performOperatorAction("reject_rombel"));
+
 document.querySelectorAll("[data-service-choice]").forEach(button => {
   button.addEventListener("click", () => chooseService(button.dataset.serviceChoice));
 });
@@ -955,6 +1298,15 @@ window.addEventListener("message", event => {
   if (typeof data === "string") {
     try { data = JSON.parse(data); }
     catch (error) { return; }
+  }
+  if (data && data.source === "REGISTRASI_OPERATOR") {
+    const pending = operatorRequests.get(data.token);
+    if (!pending) return;
+    operatorRequests.delete(data.token);
+    window.clearTimeout(pending.timer);
+    if (data.status === "success") pending.resolve(data);
+    else pending.reject(new Error(data.message || "Tindakan operator gagal."));
+    return;
   }
   if (!data || data.source !== "REGISTRASI_MURID" || data.token !== pendingToken) return;
   if (lastHandledToken === data.token) return;

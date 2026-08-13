@@ -6,7 +6,7 @@
   <meta name="theme-color" content="#0b6b65">
   <meta name="description" content="Layanan terpadu pendaftaran, mutasi, dan pembaruan data murid untuk empat SD Negeri di Maluku Tengah.">
   <title>Registrasi Murid | SD Negeri Maluku Tengah</title>
-  <link rel="stylesheet" href="style.css?v=2026.07.30-9">
+  <link rel="stylesheet" href="style.css?v=2026.08.11-10">
 </head>
 <body>
   <div class="ambient ambient-one" aria-hidden="true"></div>
@@ -60,6 +60,11 @@
             <span class="service-icon" aria-hidden="true">04</span>
             <span class="service-text"><strong>Ajukan Perubahan Rombel</strong><small>Meminta persetujuan operator jika pembagian kelas yang sudah terkunci perlu diulang.</small></span>
             <span class="service-arrow" aria-hidden="true">→</span>
+          </button>
+          <button class="service-card operator-entry" type="button" id="openOperatorRoom">
+            <span class="service-icon" aria-hidden="true">OP</span>
+            <span class="service-text"><strong>Ruang Operator</strong><small>Periksa data masuk, lihat NIS/NIPD, beri catatan, dan selesaikan verifikasi.</small></span>
+            <span class="service-arrow" aria-hidden="true">&rarr;</span>
           </button>
         </div>
 
@@ -138,8 +143,8 @@
           <input type="hidden" name="Jenis Layanan" id="formService">
           <input type="hidden" name="Kode Akses Sekolah" id="formAccessCode">
           <input type="hidden" name="Request Token" id="requestToken">
-          <input type="hidden" name="Versi Form" value="2026.07.30-9">
-          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU 2026.07.30-9">
+          <input type="hidden" name="Versi Form" value="2026.08.11-10">
+          <input type="hidden" name="Sumber Form" value="REGISTRASI MURID TERPADU 2026.08.11-10">
 
           <section class="form-step" data-services="PMB" data-title="Identitas Murid">
             <div class="step-heading"><span>01</span><div><h2>Identitas murid</h2><p>Isi persis seperti dokumen resmi.</p></div></div>
@@ -190,10 +195,6 @@
                 <label for="nik">NIK murid</label>
                 <input id="nik" name="NIK" class="digits" type="text" inputmode="numeric" maxlength="16" data-length="16" data-required="true" placeholder="16 digit NIK">
                 <span class="field-error" aria-live="polite"></span>
-              </div>
-              <div class="field-block">
-                <label for="nipd">NIPD</label>
-                <input id="nipd" name="NIPD" type="text" inputmode="numeric" placeholder="Diisi jika sudah ada">
               </div>
               <div class="field-block">
                 <label for="tempatLahir">Tempat lahir</label>
@@ -451,6 +452,56 @@
         <iframe name="submitFrame" id="submitFrame" title="Proses pengiriman data" class="submit-frame"></iframe>
       </div>
     </section>
+
+    <section id="operatorScreen" class="screen operator-screen is-hidden" aria-labelledby="operatorTitle">
+      <button type="button" class="back-link" id="backFromOperator">&larr; Kembali ke halaman awal</button>
+
+      <div id="operatorLoginPanel" class="operator-login-card">
+        <p class="eyebrow">Akses khusus pengelola</p>
+        <h1 id="operatorTitle">Ruang Operator</h1>
+        <p>Masukkan PIN operator. PIN tidak disimpan di ponsel dan tidak dikirim melalui alamat URL.</p>
+        <div class="field-block">
+          <label for="operatorPin">PIN Ruang Operator</label>
+          <input id="operatorPin" type="password" inputmode="numeric" pattern="[0-9]*" maxlength="12" autocomplete="current-password" placeholder="6&ndash;12 angka">
+          <span id="operatorLoginError" class="field-error" aria-live="polite"></span>
+        </div>
+        <button type="button" class="btn btn-primary btn-wide" id="operatorLoginBtn">Buka Ruang Operator</button>
+      </div>
+
+      <div id="operatorDashboard" class="operator-dashboard is-hidden">
+        <div class="operator-heading">
+          <div>
+            <p class="eyebrow">Pusat pemeriksaan data</p>
+            <h1>Ruang Operator</h1>
+            <p>Google Sheet tetap menjadi server. Pemeriksaan harian dilakukan dari halaman ini.</p>
+          </div>
+          <div class="operator-heading-actions">
+            <button type="button" class="btn btn-secondary" id="operatorRefreshBtn">Muat ulang</button>
+            <button type="button" class="btn btn-secondary" id="operatorLogoutBtn">Keluar</button>
+          </div>
+        </div>
+
+        <div class="operator-stats" aria-label="Ringkasan antrean">
+          <article><span>Belum selesai</span><strong id="operatorPendingCount">0</strong></article>
+          <article><span>Sudah diverifikasi</span><strong id="operatorVerifiedCount">0</strong></article>
+          <article><span>Total pengajuan</span><strong id="operatorTotalCount">0</strong></article>
+          <article><span>NIS/NIPD baru dibuat</span><strong id="operatorNipdCount">0</strong></article>
+        </div>
+        <div id="operatorNipdWarning" class="operator-warning is-hidden" role="alert"></div>
+        <div id="operatorSchoolStats" class="operator-school-stats"></div>
+
+        <div class="operator-filters">
+          <div class="field-block"><label for="operatorSchoolFilter">Sekolah</label><select id="operatorSchoolFilter"><option value="">Semua sekolah</option></select></div>
+          <div class="field-block"><label for="operatorServiceFilter">Layanan</label><select id="operatorServiceFilter"><option value="">Semua layanan</option></select></div>
+          <div class="field-block"><label for="operatorStatusFilter">Status</label><select id="operatorStatusFilter"><option value="BELUM SELESAI">Belum selesai</option><option value="SELESAI">Sudah selesai</option><option value="SEMUA">Semua status</option></select></div>
+          <div class="field-block operator-search"><label for="operatorSearch">Cari murid / identitas</label><input id="operatorSearch" type="search" placeholder="Nama, NISN, NIK, NIS/NIPD, rombel"></div>
+        </div>
+
+        <div class="operator-list-heading"><strong id="operatorListTitle">Antrean data</strong><span id="operatorListMeta"></span></div>
+        <div id="operatorList" class="operator-list" aria-live="polite"></div>
+      </div>
+      <iframe name="operatorFrame" id="operatorFrame" title="Proses Ruang Operator" class="submit-frame"></iframe>
+    </section>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -464,6 +515,34 @@
     </div>
   </div>
 
-  <script src="script.js?v=2026.07.30-9"></script>
+  <div id="operatorDetailModal" class="modal operator-detail-modal" aria-hidden="true" role="dialog" aria-modal="true" aria-labelledby="operatorDetailTitle">
+    <div class="operator-detail-card">
+      <div class="operator-detail-heading">
+        <div><p class="eyebrow">Pemeriksaan Dapodik</p><h2 id="operatorDetailTitle">Detail data</h2></div>
+        <button type="button" class="operator-close" id="operatorDetailClose" aria-label="Tutup detail">&times;</button>
+      </div>
+      <div id="operatorDetailFields" class="operator-detail-fields"></div>
+      <div class="field-block operator-note-block">
+        <label for="operatorNote">Catatan operator</label>
+        <textarea id="operatorNote" rows="3" placeholder="Contoh: Menunggu perbaikan KK atau sudah diinput ke Dapodik."></textarea>
+      </div>
+      <div id="operatorNormalActions" class="operator-action-grid">
+        <button type="button" class="btn btn-secondary" id="operatorSaveNoteBtn">Simpan catatan / belum selesai</button>
+        <button type="button" class="btn btn-submit" id="operatorVerifyKeepBtn">Selesai &amp; simpan arsip</button>
+        <div class="operator-delete-box">
+          <p><strong>Hapus pengajuan dari server</strong><br><small>Ketik HAPUS. Tindakan ini tidak dapat dibatalkan.</small></p>
+          <input id="operatorDeleteConfirm" type="text" autocomplete="off" placeholder="Ketik HAPUS">
+          <button type="button" class="btn btn-danger" id="operatorVerifyDeleteBtn">Selesai &amp; hapus pengajuan</button>
+        </div>
+      </div>
+      <div id="operatorRombelActions" class="operator-action-grid is-hidden">
+        <button type="button" class="btn btn-secondary" id="operatorRejectRombelBtn">Tolak permintaan</button>
+        <button type="button" class="btn btn-submit" id="operatorApproveRombelBtn">Setujui &amp; buka rombel</button>
+      </div>
+      <span id="operatorActionError" class="field-error" aria-live="polite"></span>
+    </div>
+  </div>
+
+  <script src="script.js?v=2026.08.11-10"></script>
 </body>
 </html>
